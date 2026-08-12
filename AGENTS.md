@@ -63,35 +63,34 @@ Reference fork (already partially working): https://github.com/Link4Electronics/
 | 23 | FNV1a checksum endianness fix (park file validation) | `Crypt.OpenRCT2.cpp` |
 | 24 | Widget union `text`/`content` separated (label/button text) | `Widget.h` (interface + ui), `Widget.cpp`, `CustomWindow.cpp`, `TileInspector.cpp`, `News.cpp` |
 | 25 | `RCT12xy8` struct reordered for BE | `RCT12.h` |
+| 26 | Comprehensive ride array element swaps (all stations/vehicles/customers), missing ride field swaps (overallView, stationStarts, entrances, exits, ratings, etc.) | `S4Importer.cpp` |
+| 27 | Base entity field swaps (x/y/z, linked list pointers, sprite bounds) | `S4Importer.cpp` |
 
 ### 🐛 Known Remaining Issues
 
 | Issue | Status | Symptoms |
 |-------|--------|----------|
-| RCT1 water object (`rct1.water.natural_water`) not found | **UNRESOLVED** — debug logging added | `[rct1.water.natural_water] Object not found`; "Place a new ride" window empty |
-| CSG loading fails on BE | **UNRESOLVED** — debug logging added | `Unable to load csg graphics` at startup on BE, works on x86_64 |
-| BSOD text missing on title screen | **LIKELY FIXED** by widget union change + RLE fix | ":( YOUR COMPUTER RAN INTO A PROBLEM" text not visible |
+| RCT1 scenario loads Icicle Worlds instead of Forest Frontiers | **UNRESOLVED** | Selecting Forest Frontiers from the scenario list shows Icicle Worlds terrain (all snow/ice, water everywhere), $0 money, can't open park |
+| AA/LL scenarios missing from selection list | **UNRESOLVED** | Corkscrew Follies and Loopy Landscapes scenarios absent — only base RCT1 maps visible |
+| RCT2 empty ride list | **UNRESOLVED** | No rides available for placement on RCT2 maps — separate from S4 import issues |
+| BSOD text missing on title screen | **UNRESOLVED** | ":( YOUR COMPUTER RAN INTO A PROBLEM" text not visible |
+| CSG loading fails on BE | **UNRESOLVED** | `Unable to load csg graphics` at startup on BE, works on x86_64 |
 
-## Debug Logging (Current Session)
+### To Diagnose the Icicle Worlds Issue
 
-Added `#if RCT2_BIG_ENDIAN`-guarded `fprintf(stderr, ...)` to:
+The S4 decode path (`DecodeSC4`/`DecodeSV4`) produces byte-identical output on BE and LE (all operations are byte-level or use explicit LE construction). `swapS4()` now covers all known multi-byte fields in the S4 struct.
 
-| File | What it logs |
-|------|-------------|
-| `ObjectRepository.cpp:Create()` | Object creation success/failure for `water` paths |
-| `ObjectRepository.cpp:LoadOrConstruct()` | Total items loaded + any water items found |
-| `ObjectRepository.cpp:FindObject()` | Lookup result for identifiers containing "water" |
-| `S4Importer.cpp:AddEntryForWater()` | `_gameVersion`, `WaterColour`, entry name |
-| `Drawing.Sprite.cpp:GfxLoadCsg()` | Resolved CSG paths, `CsgIsUsable` failure details, exception messages |
+Possible root causes to investigate:
+1. **Object loading failure** — if terrain surface objects fail to load or are mapped incorrectly, all tiles could render as ice/snow. Check whether `rct2.terrain_surface.grass` and `rct2.terrain_surface.ice` are both present and correctly resolved.
+2. **Climate object mismatch** — `GetRequiredObjects()` loads a climate object based on `_s4.Climate` (single byte, no swap). Wrong climate could make grass render as snow.
+3. **Wrong file decoded** — verify the exact file being decoded; the scenario repository might resolve the wrong path.
+4. **S4 struct layout mismatch** — verify `sizeof(S4) == 0x1F850C` on BE; any deviation would shift all field offsets.
+5. **Tile element corruption after swap** — `swapTileEl` only touches largeScenery entryIndex bytes 4-5; for non-largeScenery tiles no swap is applied, which is correct since all other tile fields are ≤ 1 byte.
 
-To see the logs, run the game with stderr redirected: `./openrct2 2>&1 | grep "DEBUG \[BE\]"`
-
-### To Diagnose
-
-1. Delete the object cache (`<user_data_dir>/cache/objects.idx`) and re-test
-2. Run with stderr logging to see which objects are found/not found
-3. For CSG, check whether the resolved paths are correct
-4. For BSOD, rebuild and regenerate all .dat files (the widget fix + RLE fix should resolve this)
+To narrow this down, run on BE with stderr logging and check:
+- Which `.sc4` file is actually being loaded (path from scenario repository)
+- Whether `rct2.terrain_surface.grass` object loads successfully
+- Whether `_s4.MapSize`, `_s4.Climate`, and `_s4.ParkFlags` have expected values after `swapS4`
 
 ## Key Design Decisions
 
@@ -136,3 +135,7 @@ To see the logs, run the game with stderr redirected: `./openrct2 2>&1 | grep "D
 ### SawyerCoding Endian-safe Checksums
 
 `DetectFileType()`, `ValidateTrackChecksum()`, and `DecodeSC4()` used `reinterpret_cast<uint32_t*>` or raw `memcpy` to read 32-bit values from LE file bytes. Changed to explicit LE byte construction.
+
+### Comprehensive S4 ride array element swaps and missing field fixes (2026-06-28)
+
+`swapS4()` previously only swapped `[0]` elements of ride arrays (`lastPeepInQueue`, `time`, `length`, `vehicles`, `numCustomers`). Fixed to loop over all array elements. Added missing ride field swaps: `nameArgumentRide`, `nameArgumentNumber`, `overallView` (uses `xy` not individual bytes — `RCT12xy8` is reordered on BE), `stationStarts`, `entrances`, `exits`, `boatHireReturnPosition`, `curTestTrackLocation`, `chairliftBullwheelLocation`, `ratings` (excitement/intensity/nausea), `raceWinner`, `musicPosition`, `unk6`, `unkD0`, `unkD2`. Also added `RideMeasurement` swaps (`LastUseTick`, `NumItems`, `CurrentItem`). Added base `RCT12EntityBase` multi-byte field swaps (`x`/`y`/`z`, linked list pointers, sprite bounds) to `swapRCT12EntityBody()`.

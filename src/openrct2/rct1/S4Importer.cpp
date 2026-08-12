@@ -325,6 +325,18 @@ namespace OpenRCT2::RCT1
         static void swapRCT12EntityBody(RCT1::Entity& entity)
         {
             auto& base = entity.Unknown;
+            base.NextInQuadrant = SWAP_IF_BE(base.NextInQuadrant);
+            base.Next = SWAP_IF_BE(base.Next);
+            base.Previous = SWAP_IF_BE(base.Previous);
+            base.EntityIndex = SWAP_IF_BE(base.EntityIndex);
+            base.Flags = SWAP_IF_BE(base.Flags);
+            base.x = SWAP_IF_BE(base.x);
+            base.y = SWAP_IF_BE(base.y);
+            base.z = SWAP_IF_BE(base.z);
+            base.SpriteLeft = SWAP_IF_BE(base.SpriteLeft);
+            base.SpriteTop = SWAP_IF_BE(base.SpriteTop);
+            base.SpriteRight = SWAP_IF_BE(base.SpriteRight);
+            base.SpriteBottom = SWAP_IF_BE(base.SpriteBottom);
             auto id = base.EntityIdentifier;
             if (id == RCT12EntityIdentifier::vehicle)
             {
@@ -394,38 +406,63 @@ namespace OpenRCT2::RCT1
             for (auto& ride : s4.Rides)
             {
                 ride.name = SWAP_IF_BE(ride.name);
+                ride.nameArgumentRide = SWAP_IF_BE(ride.nameArgumentRide);
+                ride.nameArgumentNumber = SWAP_IF_BE(ride.nameArgumentNumber);
                 ride.flags = SWAP_IF_BE(ride.flags);
-                ride.lastPeepInQueue[0] = SWAP_IF_BE(ride.lastPeepInQueue[0]);
-                ride.time[0] = SWAP_IF_BE(ride.time[0]);
-                ride.length[0] = SWAP_IF_BE(ride.length[0]);
-                ride.vehicles[0] = SWAP_IF_BE(ride.vehicles[0]);
-                ride.shelteredLength = SWAP_IF_BE(ride.shelteredLength);
-                ride.buildDate = SWAP_IF_BE(ride.buildDate);
-                ride.reliability = SWAP_IF_BE(ride.reliability);
-                ride.mechanic = SWAP_IF_BE(ride.mechanic);
+                ride.overallView.xy = SWAP_IF_BE(ride.overallView.xy);
+                for (auto& ss : ride.stationStarts)
+                    ss.xy = SWAP_IF_BE(ss.xy);
+                for (auto& e : ride.entrances)
+                    e.xy = SWAP_IF_BE(e.xy);
+                for (auto& ex : ride.exits)
+                    ex.xy = SWAP_IF_BE(ex.xy);
+                for (auto& lpq : ride.lastPeepInQueue)
+                    lpq = SWAP_IF_BE(lpq);
+                for (auto& v : ride.vehicles)
+                    v = SWAP_IF_BE(v);
+                ride.boatHireReturnPosition.xy = SWAP_IF_BE(ride.boatHireReturnPosition.xy);
+                ride.unk6 = SWAP_IF_BE(ride.unk6);
                 ride.maxSpeed = SWAP_IF_BE(ride.maxSpeed);
                 ride.averageSpeed = SWAP_IF_BE(ride.averageSpeed);
+                for (auto& l : ride.length)
+                    l = SWAP_IF_BE(l);
+                for (auto& t : ride.time)
+                    t = SWAP_IF_BE(t);
                 ride.maxPositiveVerticalG = SWAP_IF_BE(ride.maxPositiveVerticalG);
                 ride.maxNegativeVerticalG = SWAP_IF_BE(ride.maxNegativeVerticalG);
                 ride.maxLateralG = SWAP_IF_BE(ride.maxLateralG);
                 ride.previousVerticalG = SWAP_IF_BE(ride.previousVerticalG);
                 ride.previousLateralG = SWAP_IF_BE(ride.previousLateralG);
-                ride.turnCountBanked = SWAP_IF_BE(ride.turnCountBanked);
-                ride.turnCountDefault = SWAP_IF_BE(ride.turnCountDefault);
-                ride.turnCountSloped = SWAP_IF_BE(ride.turnCountSloped);
-                ride.chairliftBullwheelRotation = SWAP_IF_BE(ride.chairliftBullwheelRotation);
                 ride.testingFlags = SWAP_IF_BE(ride.testingFlags);
-                ride.mazeTiles = SWAP_IF_BE(ride.mazeTiles);
-                ride.upkeepCost = SWAP_IF_BE(ride.upkeepCost);
+                ride.curTestTrackLocation.xy = SWAP_IF_BE(ride.curTestTrackLocation.xy);
+                ride.turnCountDefault = SWAP_IF_BE(ride.turnCountDefault);
+                ride.turnCountBanked = SWAP_IF_BE(ride.turnCountBanked);
+                ride.turnCountSloped = SWAP_IF_BE(ride.turnCountSloped);
+                ride.shelteredLength = SWAP_IF_BE(ride.shelteredLength);
+                ride.unkD0 = SWAP_IF_BE(ride.unkD0);
+                ride.unkD2 = SWAP_IF_BE(ride.unkD2);
+                for (auto& nc : ride.numCustomers)
+                    nc = SWAP_IF_BE(nc);
                 ride.price = SWAP_IF_BE(ride.price);
-                ride.priceSecondary = SWAP_IF_BE(ride.priceSecondary);
-                ride.incomePerHour = SWAP_IF_BE(ride.incomePerHour);
-                ride.totalCustomers = SWAP_IF_BE(ride.totalCustomers);
-                ride.profit = SWAP_IF_BE(ride.profit);
-                ride.totalProfit = SWAP_IF_BE(ride.totalProfit);
+                for (auto& cbl : ride.chairliftBullwheelLocation)
+                    cbl.xy = SWAP_IF_BE(cbl.xy);
+                ride.chairliftBullwheelRotation = SWAP_IF_BE(ride.chairliftBullwheelRotation);
+                ride.ratings.excitement = SWAP_IF_BE(ride.ratings.excitement);
+                ride.ratings.intensity = SWAP_IF_BE(ride.ratings.intensity);
+                ride.ratings.nausea = SWAP_IF_BE(ride.ratings.nausea);
                 ride.value = SWAP_IF_BE(ride.value);
-                ride.numCustomers[0] = SWAP_IF_BE(ride.numCustomers[0]);
-
+                ride.upkeepCost = SWAP_IF_BE(ride.upkeepCost);
+                ride.raceWinner = SWAP_IF_BE(ride.raceWinner);
+                ride.musicPosition = SWAP_IF_BE(ride.musicPosition);
+                ride.mechanic = SWAP_IF_BE(ride.mechanic);
+                ride.priceSecondary = SWAP_IF_BE(ride.priceSecondary);
+                ride.reliability = SWAP_IF_BE(ride.reliability);
+                ride.incomePerHour = SWAP_IF_BE(ride.incomePerHour);
+                ride.profit = SWAP_IF_BE(ride.profit);
+                ride.buildDate = SWAP_IF_BE(ride.buildDate);
+                ride.totalCustomers = SWAP_IF_BE(ride.totalCustomers);
+                ride.totalProfit = SWAP_IF_BE(ride.totalProfit);
+                ride.mazeTiles = SWAP_IF_BE(ride.mazeTiles);
             }
             for (auto& el : s4.TileElements)
             {
@@ -517,6 +554,12 @@ namespace OpenRCT2::RCT1
             s4.ScenarioSlotIndex = SWAP_IF_BE(s4.ScenarioSlotIndex);
             s4.ScenarioFlags = SWAP_IF_BE(s4.ScenarioFlags);
             s4.ExpansionPackChecksum = SWAP_IF_BE(s4.ExpansionPackChecksum);
+            for (auto& rm : s4.RideMeasurements)
+            {
+                rm.LastUseTick = SWAP_IF_BE(rm.LastUseTick);
+                rm.NumItems = SWAP_IF_BE(rm.NumItems);
+                rm.CurrentItem = SWAP_IF_BE(rm.CurrentItem);
+            }
             for (auto& ma : s4.MapAnimations)
             {
                 ma.x = SWAP_IF_BE(ma.x);
