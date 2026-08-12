@@ -655,9 +655,7 @@ bool GfxLoadCsg()
 
     auto pathHeaderPath = FindCsg1idatAtLocation(Config::Get().general.rct1Path);
     auto pathDataPath = FindCsg1datAtLocation(Config::Get().general.rct1Path);
-#if RCT2_BIG_ENDIAN
-    fprintf(stderr, "DEBUG [BE] GfxLoadCsg: header='%s' data='%s'\n", pathHeaderPath.c_str(), pathDataPath.c_str());
-#endif
+
     try
     {
         auto fileHeader = FileStream(pathHeaderPath, FileMode::open);
@@ -670,11 +668,7 @@ bool GfxLoadCsg()
 
         if (!CsgIsUsable(_csg))
         {
-#if RCT2_BIG_ENDIAN
-            fprintf(stderr, "DEBUG [BE] GfxLoadCsg: CsgIsUsable FAILED numEntries=%u totalSize=%u (expected: num=%u size=%u)\n",
-                _csg.header.numEntries, _csg.header.totalSize,
-                RCT1::Limits::kNumLLCsgEntries, RCT1::Limits::kLLCsg1DatFileSize);
-#endif
+
             LOG_WARNING("Cannot load CSG1.DAT, it has too few entries. Only CSG1.DAT from Loopy Landscapes will work.");
             return false;
         }
@@ -708,9 +702,7 @@ bool GfxLoadCsg()
     }
     catch (const std::exception& e)
     {
-#if RCT2_BIG_ENDIAN
-        fprintf(stderr, "DEBUG [BE] GfxLoadCsg: EXCEPTION: %s\n", e.what());
-#endif
+
         _csg.elements.clear();
         _csg.elements.shrink_to_fit();
 

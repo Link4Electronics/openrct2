@@ -183,15 +183,7 @@ namespace OpenRCT2::RCT1
 
         void Import(GameState_t& gameState) override
         {
-#if RCT2_BIG_ENDIAN
-            std::fprintf(stderr, "DEBUG [BE] Import: start\n");
-            std::fflush(stderr);
-#endif
             Initialise(gameState);
-#if RCT2_BIG_ENDIAN
-            std::fprintf(stderr, "DEBUG [BE] Import: after Initialise\n");
-            std::fflush(stderr);
-#endif
 
             ImportRides();
             ImportRideMeasurements();
@@ -321,14 +313,7 @@ namespace OpenRCT2::RCT1
         {
             auto type = el.getType();
             uint8_t* bytes = reinterpret_cast<uint8_t*>(&el);
-            if (type == RCT12TileElementType::track)
-            {
-                uint16_t mazeEntry;
-                std::memcpy(&mazeEntry, bytes + 5, sizeof(uint16_t));
-                mazeEntry = SWAP_IF_BE(mazeEntry);
-                std::memcpy(bytes + 5, &mazeEntry, sizeof(uint16_t));
-            }
-            else if (type == RCT12TileElementType::largeScenery)
+            if (type == RCT12TileElementType::largeScenery)
             {
                 uint16_t entryIndex;
                 std::memcpy(&entryIndex, bytes + 4, sizeof(uint16_t));
@@ -784,10 +769,6 @@ namespace OpenRCT2::RCT1
             {
                 entryName = GetWaterObject(_s4.WaterColour);
             }
-#if RCT2_BIG_ENDIAN
-            fprintf(stderr, "DEBUG [BE] AddEntryForWater: _gameVersion=%d WaterColour=%d entryName='%.*s'\n",
-                _gameVersion, _s4.WaterColour, static_cast<int>(entryName.size()), entryName.data());
-#endif
             _waterEntry.GetOrAddEntry(entryName);
         }
 
@@ -1926,7 +1907,7 @@ namespace OpenRCT2::RCT1
                     // This has to be done last, since the maze entry shares fields with the colour and sequence fields.
                     if (rct1RideType == RideType::hedgeMaze)
                     {
-                        dst2->SetMazeEntry(src2->GetMazeEntry());
+                        dst2->SetMazeEntry(SWAP_IF_BE(src2->GetMazeEntry()));
                     }
 
                     if (TrackTypeMustBeMadeInvisible(*dst2))

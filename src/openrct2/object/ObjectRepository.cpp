@@ -104,10 +104,6 @@ namespace OpenRCT2
                 || (object->GetGeneration() == ObjectGeneration::DAT
                     && object->GetObjectEntry().GetSourceGame() != ObjectSourceGame::custom))
             {
-#if RCT2_BIG_ENDIAN
-                if (path.find("water") != std::string::npos)
-                    fprintf(stderr, "DEBUG [BE] Create: FAILED for %s (nullptr=%d)\n", path.c_str(), object == nullptr);
-#endif
                 return std::nullopt;
             }
 
@@ -115,10 +111,6 @@ namespace OpenRCT2
             item.Type = object->GetObjectType();
             item.Generation = object->GetGeneration();
             item.Identifier = object->GetIdentifier();
-#if RCT2_BIG_ENDIAN
-            if (item.Identifier.find("water") != std::string::npos || path.find("water") != std::string::npos)
-                fprintf(stderr, "DEBUG [BE] Create: SUCCESS id='%s' path='%s'\n", item.Identifier.c_str(), path.c_str());
-#endif
             item.ObjectEntry = object->GetObjectEntry();
             item.Version = object->GetVersion();
             item.Path = path;
@@ -199,14 +191,6 @@ namespace OpenRCT2
         {
             ClearItems();
             auto items = _fileIndex.LoadOrBuild(language);
-#if RCT2_BIG_ENDIAN
-            fprintf(stderr, "DEBUG [BE] LoadOrConstruct: loaded %zu items\n", items.size());
-            for (const auto& item : items)
-            {
-                if (item.Identifier.find("water") != std::string::npos)
-                    fprintf(stderr, "DEBUG [BE] LoadOrConstruct: FOUND water item: '%s' path='%s'\n", item.Identifier.c_str(), item.Path.c_str());
-            }
-#endif
             AddItems(items);
             SortItems();
         }
@@ -243,16 +227,6 @@ namespace OpenRCT2
 
         const ObjectRepositoryItem* FindObject(std::string_view identifier) const override final
         {
-#if RCT2_BIG_ENDIAN
-            if (identifier.find("water") != std::string_view::npos)
-            {
-                auto kvp = _newItemMap.find(identifier);
-                bool found = kvp != _newItemMap.end();
-                fprintf(stderr, "DEBUG [BE] FindObject(id='%.*s') -> %s (map size=%zu)\n",
-                    static_cast<int>(identifier.size()), identifier.data(),
-                    found ? "FOUND" : "NOT FOUND", _newItemMap.size());
-            }
-#endif
             auto kvp = _newItemMap.find(identifier);
             if (kvp != _newItemMap.end())
             {

@@ -11,7 +11,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdio>
 #include <openrct2-ui/UiStringIds.h>
 #include <openrct2-ui/interface/Theme.h>
 #include <openrct2-ui/windows/Windows.h>
