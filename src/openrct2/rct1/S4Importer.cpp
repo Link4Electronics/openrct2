@@ -381,6 +381,13 @@ namespace OpenRCT2::RCT1
 
         static void swapS4(S4& s4)
         {
+            // Header fields
+            s4.Month = SWAP_IF_BE(s4.Month);
+            s4.Day = SWAP_IF_BE(s4.Day);
+            s4.Ticks = SWAP_IF_BE(s4.Ticks);
+            s4.RandomA = SWAP_IF_BE(s4.RandomA);
+            s4.RandomB = SWAP_IF_BE(s4.RandomB);
+
             s4.GameVersion = SWAP_IF_BE(s4.GameVersion);
             s4.NumRides = SWAP_IF_BE(s4.NumRides);
 
@@ -428,12 +435,88 @@ namespace OpenRCT2::RCT1
             {
                 swapRCT12EntityBody(entity);
             }
+
+            // Entity list heads and counts
+            s4.NextEntityIndex = SWAP_IF_BE(s4.NextEntityIndex);
+            s4.FirstVehicleEntityIndex = SWAP_IF_BE(s4.FirstVehicleEntityIndex);
+            s4.FirstPeepEntityIndex = SWAP_IF_BE(s4.FirstPeepEntityIndex);
+            s4.FirstDuckEntityIndex = SWAP_IF_BE(s4.FirstDuckEntityIndex);
+            s4.FirstLitterEntityIndex = SWAP_IF_BE(s4.FirstLitterEntityIndex);
+            s4.FirstOversizedRideCarEntityIndex = SWAP_IF_BE(s4.FirstOversizedRideCarEntityIndex);
+            s4.EntitiesAvailable = SWAP_IF_BE(s4.EntitiesAvailable);
+            s4.NumVehicleEntities = SWAP_IF_BE(s4.NumVehicleEntities);
+            s4.NumPeepEntities = SWAP_IF_BE(s4.NumPeepEntities);
+            s4.NumDuckEntities = SWAP_IF_BE(s4.NumDuckEntities);
+            s4.NumLitterEntities = SWAP_IF_BE(s4.NumLitterEntities);
+            s4.NumOversizedRideCarEntities = SWAP_IF_BE(s4.NumOversizedRideCarEntities);
+
+            // Park finance and flags
+            s4.ParkNameStringIndex = SWAP_IF_BE(s4.ParkNameStringIndex);
+            s4.Cash = SWAP_IF_BE(s4.Cash);
+            s4.Loan = SWAP_IF_BE(s4.Loan);
+            s4.ParkFlags = SWAP_IF_BE(s4.ParkFlags);
+            s4.ParkEntranceFee = SWAP_IF_BE(s4.ParkEntranceFee);
+            s4.ParkEntrance.x = SWAP_IF_BE(s4.ParkEntrance.x);
+            s4.ParkEntrance.y = SWAP_IF_BE(s4.ParkEntrance.y);
+            s4.ParkEntrance.z = SWAP_IF_BE(s4.ParkEntrance.z);
+
+            // More finance/money fields
+            s4.MaxLoan = SWAP_IF_BE(s4.MaxLoan);
+            s4.TotalRideValueForMoney = SWAP_IF_BE(s4.TotalRideValueForMoney);
+            s4.GuestInitialCash = SWAP_IF_BE(s4.GuestInitialCash);
+            s4.LandPrice = SWAP_IF_BE(s4.LandPrice);
+            s4.ConstructionRightsPrice = SWAP_IF_BE(s4.ConstructionRightsPrice);
+            s4.CompanyValue = SWAP_IF_BE(s4.CompanyValue);
+            s4.ParkValue = SWAP_IF_BE(s4.ParkValue);
+            s4.Profit = SWAP_IF_BE(s4.Profit);
+            s4.CompletedCompanyValue = SWAP_IF_BE(s4.CompletedCompanyValue);
+            s4.TotalExpenditure = SWAP_IF_BE(s4.TotalExpenditure);
+            s4.NumAdmissions = SWAP_IF_BE(s4.NumAdmissions);
+            s4.AdmissionTotalIncome = SWAP_IF_BE(s4.AdmissionTotalIncome);
+            s4.SamePriceThroughout = SWAP_IF_BE(s4.SamePriceThroughout);
+            s4.ScenarioObjectiveCurrency = SWAP_IF_BE(s4.ScenarioObjectiveCurrency);
+            s4.ScenarioObjectiveNumGuests = SWAP_IF_BE(s4.ScenarioObjectiveNumGuests);
+            s4.Unk199552 = SWAP_IF_BE(s4.Unk199552);
+            for (auto& ch : s4.CashHistory)
+                ch = SWAP_IF_BE(ch);
+            for (auto& pv : s4.ParkValueHistory)
+                pv = SWAP_IF_BE(pv);
+            for (auto& wp : s4.WeeklyProfitHistory)
+                wp = SWAP_IF_BE(wp);
+            for (auto& eRow : s4.Expenditure)
+                for (auto& e : eRow)
+                    e = SWAP_IF_BE(e);
+
+            // Guest/peep data
+            s4.GuestsInPark = SWAP_IF_BE(s4.GuestsInPark);
+            s4.GuestsInPark2 = SWAP_IF_BE(s4.GuestsInPark2);
+            s4.AvailableBanners = SWAP_IF_BE(s4.AvailableBanners);
+            s4.ParkRating = SWAP_IF_BE(s4.ParkRating);
+            s4.ParkSize = SWAP_IF_BE(s4.ParkSize);
+            s4.GuestGenerationProbability = SWAP_IF_BE(s4.GuestGenerationProbability);
+            s4.WeatherUpdateTimer = SWAP_IF_BE(s4.WeatherUpdateTimer);
+
+            // Research
+            s4.ResearchProgress = SWAP_IF_BE(s4.ResearchProgress);
+
             // S4 uint16_t fields that need swapping near the struct end
             s4.MapSizeUnits = SWAP_IF_BE(s4.MapSizeUnits);
             s4.MapSizeUnkB = SWAP_IF_BE(s4.MapSizeUnkB);
             s4.MapSize = SWAP_IF_BE(s4.MapSize);
             s4.MapSizeMaxXY = SWAP_IF_BE(s4.MapSizeMaxXY);
             s4.NumMapAnimations = SWAP_IF_BE(s4.NumMapAnimations);
+            s4.Unk199C9A = SWAP_IF_BE(s4.Unk199C9A);
+            s4.ViewX = SWAP_IF_BE(s4.ViewX);
+            s4.ViewY = SWAP_IF_BE(s4.ViewY);
+            s4.UnkGameTimeCounter = SWAP_IF_BE(s4.UnkGameTimeCounter);
+            s4.ScrollingTextStep = SWAP_IF_BE(s4.ScrollingTextStep);
+            s4.Unk1CADCA = SWAP_IF_BE(s4.Unk1CADCA);
+            s4.Unk1CADCE = SWAP_IF_BE(s4.Unk1CADCE);
+            s4.NextGuestIndex = SWAP_IF_BE(s4.NextGuestIndex);
+            s4.GameCounter5 = SWAP_IF_BE(s4.GameCounter5);
+            s4.ScenarioSlotIndex = SWAP_IF_BE(s4.ScenarioSlotIndex);
+            s4.ScenarioFlags = SWAP_IF_BE(s4.ScenarioFlags);
+            s4.ExpansionPackChecksum = SWAP_IF_BE(s4.ExpansionPackChecksum);
             for (auto& ma : s4.MapAnimations)
             {
                 ma.x = SWAP_IF_BE(ma.x);
