@@ -9,6 +9,7 @@
 
 #include "Csg.h"
 
+#include "../core/File.h"
 #include "../core/FileStream.h"
 #include "../core/Path.hpp"
 #include "../drawing/Drawing.h"
@@ -40,13 +41,42 @@ namespace OpenRCT2
 
     u8string FindCsg1idatAtLocation(u8string_view path)
     {
-        auto result1 = Path::ResolveCasing(Path::Combine(path, u8"Data", u8"CSG1I.DAT"));
+        auto checkPath1 = Path::Combine(path, u8"Data", u8"CSG1I.DAT");
+        auto checkPath2 = Path::Combine(path, u8"Data", u8"CSG1I.1");
+        auto checkPath3 = Path::Combine(path, u8"RCTdeluxe_install", u8"Data", u8"CSG1I.DAT");
+
+        auto result1 = Path::ResolveCasing(checkPath1);
         if (!result1.empty())
         {
             return result1;
         }
-        auto result2 = Path::ResolveCasing(Path::Combine(path, u8"RCTdeluxe_install", u8"Data", u8"CSG1I.DAT"));
-        return result2;
+
+        auto result2 = Path::ResolveCasing(checkPath2);
+        if (!result2.empty())
+        {
+            return result2;
+        }
+
+        auto result3 = Path::ResolveCasing(checkPath3);
+        if (!result3.empty())
+        {
+            return result3;
+        }
+
+        // Direct lowercase fallback for case-sensitive filesystems where scandir-based
+        // ResolveCasing might fail (e.g., mount permissions, overlay filesystems).
+        auto checkPath4 = Path::Combine(path, u8"Data", u8"csg1i.dat");
+        if (File::Exists(checkPath4))
+        {
+            return u8string(checkPath4);
+        }
+        auto checkPath5 = Path::Combine(path, u8"Data", u8"csg1i.1");
+        if (File::Exists(checkPath5))
+        {
+            return u8string(checkPath5);
+        }
+
+        return {};
     }
 
     bool Csg1idatPresentAtLocation(u8string_view path)

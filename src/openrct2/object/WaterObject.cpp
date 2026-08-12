@@ -12,6 +12,7 @@
 #include "WaterObject.h"
 
 #include "../OpenRCT2.h"
+#include "../core/Endianness.h"
 #include "../core/IStream.hpp"
 #include "../core/Json.hpp"
 #include "../drawing/Drawing.h"
@@ -31,7 +32,7 @@ namespace OpenRCT2
     void WaterObject::ReadLegacy(IReadObjectContext* context, IStream* stream)
     {
         stream->Seek(14, STREAM_SEEK_CURRENT);
-        _legacyType.flags = stream->ReadValue<uint16_t>();
+        _legacyType.flags = SWAP_IF_BE(stream->ReadValue<uint16_t>());
 
         GetStringTable().Read(context, stream, ObjectStringID::name);
         GetImageTable().Read(context, stream);

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "../Identifiers.h"
+#include "../core/Endianness.h"
 #include "../entity/EntityBase.h"
 #include "../localisation/StringIdType.h"
 #include "../ride/RideTypes.h"
@@ -346,14 +347,24 @@ namespace OpenRCT2
         {
             struct
             {
+#if RCT2_BIG_ENDIAN
+                uint8_t CurrentSeat;
+                uint8_t CurrentCar;
+#else
                 uint8_t CurrentCar;
                 uint8_t CurrentSeat;
+#endif
             };
             uint16_t TimeToSitdown;
             struct
             {
+#if RCT2_BIG_ENDIAN
+                uint8_t StandingFlags;
+                uint8_t TimeToStand;
+#else
                 uint8_t TimeToStand;
                 uint8_t StandingFlags;
+#endif
             };
             uint8_t timesSlidDown;
         };

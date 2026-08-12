@@ -11,6 +11,7 @@
 
 #include "../Identifiers.h"
 #include "../audio/Audio.h"
+#include "../core/Endianness.h"
 #include "../core/FlagHolder.hpp"
 #include "../entity/EntityBase.h"
 #include "../ride/RideTypes.h"
@@ -177,8 +178,13 @@ struct Vehicle : OpenRCT2::EntityBase
         uint16_t track_progress;
         struct
         {
+#if RCT2_BIG_ENDIAN
+            uint8_t var_35;
+            int8_t var_34;
+#else
             int8_t var_34;
             uint8_t var_35;
+#endif
         };
     };
     uint16_t TrackTypeAndDirection;
@@ -202,8 +208,13 @@ struct Vehicle : OpenRCT2::EntityBase
         int16_t current_time;
         struct
         {
+#if RCT2_BIG_ENDIAN
+            int8_t ferris_wheel_var_1;
+            int8_t ferris_wheel_var_0;
+#else
             int8_t ferris_wheel_var_0;
             int8_t ferris_wheel_var_1;
+#endif
         };
         int16_t rider_speed_preference;
     };

@@ -548,6 +548,7 @@ namespace OpenRCT2
                 auto& descriptors = objectList.GetList(objectType);
                 auto maxSize = static_cast<size_t>(getObjectEntryGroupCount(objectType));
                 auto listSize = static_cast<ObjectEntryIndex>(std::min(descriptors.size(), maxSize));
+                std::fprintf(stderr, "DEBUG [BE] GetRequiredObjects: type=%d count=%d\n", static_cast<int>(objectType), listSize);
                 for (ObjectEntryIndex i = 0; i < listSize; i++)
                 {
                     const auto& entry = objectList.GetObject(objectType, i);
@@ -677,10 +678,14 @@ namespace OpenRCT2
             }
 
             // Load objects
+            std::fprintf(stderr, "DEBUG [BE] LoadObjects: about to call Load() on %zu objects\n", newLoadedObjects.size());
+            std::fflush(stderr);
             for (auto* obj : newLoadedObjects)
             {
                 obj->Load();
             }
+            std::fprintf(stderr, "DEBUG [BE] LoadObjects: done calling Load()\n");
+            std::fflush(stderr);
 
             if (!badObjects.empty())
             {

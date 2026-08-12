@@ -14,6 +14,7 @@
 #include "core/FileStream.h"
 #include "core/Path.hpp"
 #include "core/String.hpp"
+#include "core/Endianness.h"
 #include "park/ParkFile.h"
 #include "rct2/RCT2.h"
 #include "sawyer_coding/SawyerChunkReader.h"
@@ -82,7 +83,7 @@ static bool TryClassifyAsPark(IStream* stream, ClassifiedFileInfo* result)
     try
     {
         auto magic = stream->ReadValue<uint32_t>();
-        if (magic == kParkFileMagic)
+        if (SWAP_IF_BE(magic) == kParkFileMagic)
         {
             result->Type = FileType::park;
             result->Version = 0;

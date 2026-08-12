@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "../core/Endianness.h"
 #include "../core/FileSystem.hpp"
 #include "../core/FixedPoint.hpp"
 #include "../rct12/RCT12.h"
@@ -446,8 +447,13 @@ namespace OpenRCT2::RCT2
             uint16_t TrackProgress; // 0x34
             struct
             {
+#if RCT2_BIG_ENDIAN
+                uint8_t Var35;
+                int8_t Var34;
+#else
                 int8_t Var34;
                 uint8_t Var35;
+#endif
             };
         };
         union
@@ -472,8 +478,13 @@ namespace OpenRCT2::RCT2
             int16_t CurrentTime;   // 0x4C
             struct
             {
+#if RCT2_BIG_ENDIAN
+                int8_t FerrisWheelVar1; // 0x4C (low byte on BE)
+                int8_t FerrisWheelVar0; // 0x4D (high byte on BE)
+#else
                 int8_t FerrisWheelVar0; // 0x4C
                 int8_t FerrisWheelVar1; // 0x4D
+#endif
             };
         };
         union
@@ -607,14 +618,24 @@ namespace OpenRCT2::RCT2
         {
             struct
             {
+#if RCT2_BIG_ENDIAN
+                uint8_t CurrentSeat;  // 0x6B (high byte on BE)
+                uint8_t CurrentCar;   // 0x6C (low byte on BE)
+#else
                 uint8_t CurrentCar;  // 0x6B
                 uint8_t CurrentSeat; // 0x6C
+#endif
             };
             uint16_t TimeToSitdown; // 0x6B
             struct
             {
+#if RCT2_BIG_ENDIAN
+                uint8_t StandingFlags; // 0x6B (high byte on BE)
+                uint8_t TimeToStand;   // 0x6C (low byte on BE)
+#else
                 uint8_t TimeToStand;   // 0x6B
                 uint8_t StandingFlags; // 0x6C
+#endif
             };
         };
         uint8_t SpecialSprite;          // 0x6D

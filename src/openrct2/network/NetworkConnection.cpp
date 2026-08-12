@@ -102,7 +102,7 @@ namespace OpenRCT2::Network
 
             // Normalise values.
             header.size = Convert::NetworkToHost(header.size);
-            header.id = ByteSwapBE(header.id);
+            header.id = SWAP_IF_LE(header.id);
 
             // NOTE: For compatibility reasons for the master server we need to remove sizeof(Header.id) from the size.
             // Previously the id field was not part of the header rather part of the body.
@@ -164,7 +164,7 @@ namespace OpenRCT2::Network
             PacketLegacyHeader header{};
             header.size = static_cast<uint16_t>(bodyLength);
             header.size = Convert::HostToNetwork(header.size);
-            header.id = ByteSwapBE(packet.header.id);
+            header.id = SWAP_IF_LE(packet.header.id);
 
             buffer.insert(
                 buffer.end(), reinterpret_cast<uint8_t*>(&header), reinterpret_cast<uint8_t*>(&header) + sizeof(header));

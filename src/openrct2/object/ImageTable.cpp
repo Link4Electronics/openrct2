@@ -14,6 +14,7 @@
 #include "../OpenRCT2.h"
 #include "../PlatformEnvironment.h"
 #include "../SpriteIds.h"
+#include "../core/Endianness.h"
 #include "../core/File.h"
 #include "../core/FileScanner.h"
 #include "../core/Guard.hpp"
@@ -439,8 +440,8 @@ namespace OpenRCT2
 
         try
         {
-            uint32_t numImages = stream->ReadValue<uint32_t>();
-            uint32_t imageDataSize = stream->ReadValue<uint32_t>();
+            uint32_t numImages = SWAP_IF_BE(stream->ReadValue<uint32_t>());
+            uint32_t imageDataSize = SWAP_IF_BE(stream->ReadValue<uint32_t>());
 
             uint64_t headerTableSize = numImages * 16;
             uint64_t remainingBytes = stream->GetLength() - stream->GetPosition() - headerTableSize;
@@ -465,15 +466,15 @@ namespace OpenRCT2
             {
                 G1Element g1Element{};
 
-                uintptr_t imageDataOffset = static_cast<uintptr_t>(stream->ReadValue<uint32_t>());
+                uintptr_t imageDataOffset = static_cast<uintptr_t>(SWAP_IF_BE(stream->ReadValue<uint32_t>()));
                 g1Element.offset = reinterpret_cast<uint8_t*>(imageDataBase + imageDataOffset);
 
-                g1Element.width = stream->ReadValue<int16_t>();
-                g1Element.height = stream->ReadValue<int16_t>();
-                g1Element.xOffset = stream->ReadValue<int16_t>();
-                g1Element.yOffset = stream->ReadValue<int16_t>();
-                g1Element.flags = stream->ReadValue<G1Flags>();
-                g1Element.zoomedOffset = stream->ReadValue<uint16_t>();
+                g1Element.width = SWAP_IF_BE(stream->ReadValue<int16_t>());
+                g1Element.height = SWAP_IF_BE(stream->ReadValue<int16_t>());
+                g1Element.xOffset = SWAP_IF_BE(stream->ReadValue<int16_t>());
+                g1Element.yOffset = SWAP_IF_BE(stream->ReadValue<int16_t>());
+                g1Element.flags = SWAP_IF_BE(stream->ReadValue<G1Flags>());
+                g1Element.zoomedOffset = SWAP_IF_BE(stream->ReadValue<uint16_t>());
 
                 newEntries.push_back(std::move(g1Element));
             }

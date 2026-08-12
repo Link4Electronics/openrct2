@@ -50,6 +50,7 @@
 #include "../ride/RideManager.hpp"
 #include "../ride/ShopItem.h"
 #include "../ride/Track.h"
+#include "../ride/ted/TrackElemType.h"
 #include "../ride/Vehicle.h"
 #include "../scenario/Scenario.h"
 #include "../scenario/ScenarioRepository.h"
@@ -60,9 +61,13 @@
 #include "../world/Park.h"
 #include "../world/Scenery.h"
 #include "../world/Weather.h"
+#include "../world/tile_element/BannerElement.h"
+#include "../world/tile_element/EntranceElement.h"
+#include "../world/tile_element/LargeSceneryElement.h"
 #include "../world/tile_element/PathElement.h"
 #include "../world/tile_element/SmallSceneryElement.h"
 #include "../world/tile_element/TrackElement.h"
+#include "../world/tile_element/WallElement.h"
 #include "Legacy.h"
 #include "ParkPreview.h"
 
@@ -343,6 +348,8 @@ namespace OpenRCT2
                                     {
                                         RCTObjectEntry datEntry;
                                         cs.read(&datEntry, sizeof(datEntry));
+                                        datEntry.flags = SWAP_IF_BE(datEntry.flags);
+                                        datEntry.checksum = SWAP_IF_BE(datEntry.checksum);
                                         ObjectEntryDescriptor desc(datEntry);
                                         if (version < kFixedObsoleteFootpathsVersion && datEntry.GetType() == ObjectType::paths)
                                         {
@@ -471,7 +478,12 @@ namespace OpenRCT2
                                 else
                                 {
                                     cs.write(kDescriptorDat);
-                                    cs.write(&entry.Entry, sizeof(RCTObjectEntry));
+                                    {
+                                        auto entrySwapped = entry.Entry;
+                                        entrySwapped.flags = SWAP_IF_BE(entrySwapped.flags);
+                                        entrySwapped.checksum = SWAP_IF_BE(entrySwapped.checksum);
+                                        cs.write(&entrySwapped, sizeof(RCTObjectEntry));
+                                    }
                                 }
                             }
                             else
@@ -795,6 +807,8 @@ namespace OpenRCT2
                         {
                             RCTObjectEntry entry;
                             cs.read(&entry, sizeof(entry));
+                            entry.flags = SWAP_IF_BE(entry.flags);
+                            entry.checksum = SWAP_IF_BE(entry.checksum);
                             auto size = cs.read<uint32_t>();
                             std::vector<uint8_t> data;
                             data.resize(size);
@@ -841,7 +855,12 @@ namespace OpenRCT2
                         if (String::iequals(extension, ".dat"))
                         {
                             cs.write(kDescriptorDat);
-                            cs.write(&ori->ObjectEntry, sizeof(RCTObjectEntry));
+                            {
+                                auto entrySwapped = ori->ObjectEntry;
+                                entrySwapped.flags = SWAP_IF_BE(entrySwapped.flags);
+                                entrySwapped.checksum = SWAP_IF_BE(entrySwapped.checksum);
+                                cs.write(&entrySwapped, sizeof(RCTObjectEntry));
+                            }
                         }
                         else if (String::iequals(extension, ".parkobj"))
                         {
@@ -1183,6 +1202,98 @@ namespace OpenRCT2
             }
         }
 
+        static void swapTileElement(TileElement* te)
+        {
+            auto type = te->getType();
+            auto bytes = reinterpret_cast<uint8_t*>(te);
+            uint16_t val;
+
+            switch (type)
+            {
+                case TileElementType::Track:
+                {
+                    uint16_t val2;
+                    std::memcpy(&val, bytes + 5, sizeof(uint16_t));
+                    val2 = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 5, &val2, sizeof(uint16_t));
+
+                    bool isMaze = (val == static_cast<uint16_t>(TrackElemType::maze)
+                                   || val2 == static_cast<uint16_t>(TrackElemType::maze));
+                    if (isMaze)
+                    {
+                        std::memcpy(&val, bytes + 7, sizeof(uint16_t));
+                        val = SWAP_IF_BE(val);
+                        std::memcpy(bytes + 7, &val, sizeof(uint16_t));
+                    }
+
+                    std::memcpy(&val, bytes + 12, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 12, &val, sizeof(uint16_t));
+
+                    std::memcpy(&val, bytes + 14, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 14, &val, sizeof(uint16_t));
+                    break;
+                }
+                case TileElementType::SmallScenery:
+                    std::memcpy(&val, bytes + 5, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 5, &val, sizeof(uint16_t));
+                    break;
+                case TileElementType::Path:
+                    std::memcpy(&val, bytes + 5, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 5, &val, sizeof(uint16_t));
+
+                    std::memcpy(&val, bytes + 7, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 7, &val, sizeof(uint16_t));
+
+                    std::memcpy(&val, bytes + 13, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 13, &val, sizeof(uint16_t));
+                    break;
+                case TileElementType::Entrance:
+                    std::memcpy(&val, bytes + 8, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 8, &val, sizeof(uint16_t));
+
+                    std::memcpy(&val, bytes + 10, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 10, &val, sizeof(uint16_t));
+
+                    std::memcpy(&val, bytes + 13, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 13, &val, sizeof(uint16_t));
+                    break;
+                case TileElementType::LargeScenery:
+                    std::memcpy(&val, bytes + 5, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 5, &val, sizeof(uint16_t));
+
+                    std::memcpy(&val, bytes + 7, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 7, &val, sizeof(uint16_t));
+                    break;
+                case TileElementType::Wall:
+                    std::memcpy(&val, bytes + 5, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 5, &val, sizeof(uint16_t));
+
+                    std::memcpy(&val, bytes + 10, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 10, &val, sizeof(uint16_t));
+                    break;
+                case TileElementType::Banner:
+                    std::memcpy(&val, bytes + 5, sizeof(uint16_t));
+                    val = SWAP_IF_BE(val);
+                    std::memcpy(bytes + 5, &val, sizeof(uint16_t));
+                    break;
+                default:
+                    break;
+            }
+        }
+
         void ReadWriteTilesChunk(GameState_t& gameState, OrcaStream& os)
         {
             auto* pathToSurfaceMap = _pathToSurfaceMap;
@@ -1198,6 +1309,8 @@ namespace OpenRCT2
                     if (cs.getMode() == OrcaStream::Mode::writing)
                     {
                         auto tileElements = GetReorganisedTileElementsWithoutGhosts();
+                        for (auto& te : tileElements)
+                            swapTileElement(&te);
                         cs.write(static_cast<uint32_t>(tileElements.size()));
                         cs.write(tileElements.data(), tileElements.size() * sizeof(TileElement));
                         return;
@@ -1209,6 +1322,8 @@ namespace OpenRCT2
                     std::vector<TileElement> tileElements;
                     tileElements.resize(numElements);
                     cs.read(tileElements.data(), tileElements.size() * sizeof(TileElement));
+                    for (auto& te : tileElements)
+                        swapTileElement(&te);
                     SetTileElements(gameState, std::move(tileElements));
 
                     TileElementIterator it;

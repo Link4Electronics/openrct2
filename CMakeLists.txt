@@ -103,7 +103,7 @@ CMAKE_DEPENDENT_OPTION(MACOS_BUNDLE "Build macOS application bundle (OpenRCT2.ap
 option(STATIC "Create a static build.")
 option(USE_MMAP "Use mmap to try loading rct2's data segment into memory.")
 
-option(DISABLE_DISCORD_RPC "Disable Discord-RPC support." OFF)
+option(DISABLE_DISCORD_RPC "Disable Discord-RPC support." ON)
 # Currently unused, disable by default.
 option(DISABLE_GOOGLE_BENCHMARK "Disable Google Benchmarks support." ON)
 option(DISABLE_HTTP "Disable HTTP support.")
@@ -318,6 +318,11 @@ else ()
     # unused-const-variable[=2] would check for unused values from headers as well
     ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_UNUSED_CONST_VARIABLE -Wunused-const-variable=1)
     ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WNO_CLOBBERED -Wno-clobbered)
+
+    # Suppress warnings on ppc64 big-endian (GCC 14+)
+    ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WNO_ERROR_MAYBE_UNINITIALIZED -Wno-error=maybe-uninitialized)
+    ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WNO_ERROR_RESTRICT -Wno-error=restrict)
+    ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WNO_ERROR_STRINGOP_OVERFLOW -Wno-error=stringop-overflow)
     # Disabled due to problems compiling OpenSSL on macOS.
     # ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_DOCUMENTATION -Wdocumentation)
 

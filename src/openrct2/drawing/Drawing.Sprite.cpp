@@ -15,17 +15,20 @@
 #include "../PlatformEnvironment.h"
 #include "../SpriteIds.h"
 #include "../config/Config.h"
+#include "../core/Endianness.h"
 #include "../core/FileStream.h"
 #include "../core/Guard.hpp"
 #include "../core/MemoryStream.h"
 #include "../core/Path.hpp"
 #include "../platform/Platform.h"
 #include "../rct1/Csg.h"
+#include "../rct1/Limits.h"
 #include "../ui/UiContext.h"
 #include "Drawing.h"
 #include "ScrollingText.h"
 
 #include <cassert>
+#include <cstdio>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -311,10 +314,25 @@ static void OverrideElementOffsets(size_t index, G1Element& element)
     }
 }
 
+static void swapStoredG1Element(StoredG1Element& el)
+{
+    el.offset = SWAP_IF_BE(el.offset);
+    el.width = SWAP_IF_BE(el.width);
+    el.height = SWAP_IF_BE(el.height);
+    el.xOffset = SWAP_IF_BE(el.xOffset);
+    el.yOffset = SWAP_IF_BE(el.yOffset);
+    el.flags = SWAP_IF_BE(el.flags);
+    el.zoomedOffset = SWAP_IF_BE(el.zoomedOffset);
+}
+
 static void ReadAndConvertGxDat(IStream* stream, size_t count, bool is_rctc, G1Element* elements)
 {
     auto g1Elements32 = std::make_unique<StoredG1Element[]>(count);
     stream->Read(g1Elements32.get(), count * sizeof(StoredG1Element));
+    for (size_t i = 0; i < count; i++)
+    {
+        swapStoredG1Element(g1Elements32[i]);
+    }
     if (is_rctc)
     {
         // Process RCTC's g1.dat file
@@ -466,6 +484,8 @@ bool GfxLoadG1(const IPlatformEnvironment& env)
         auto path = env.FindFile(DirBase::rct2, DirId::data, u8"g1.dat");
         auto fs = FileStream(path, FileMode::open);
         _g1.header = fs.ReadValue<G1Header>();
+        _g1.header.numEntries = SWAP_IF_BE(_g1.header.numEntries);
+        _g1.header.totalSize = SWAP_IF_BE(_g1.header.totalSize);
 
         LOG_VERBOSE("g1.dat, number of entries: %u", _g1.header.numEntries);
 
@@ -557,6 +577,8 @@ static bool GfxLoadOpenRCT2Gx(std::string filename, Gx& target, size_t expectedN
     {
         auto fs = FileStream(path, FileMode::open);
         target.header = fs.ReadValue<G1Header>();
+        target.header.numEntries = SWAP_IF_BE(target.header.numEntries);
+        target.header.totalSize = SWAP_IF_BE(target.header.totalSize);
 
         // Read element headers
         target.elements.resize(target.header.numEntries);
@@ -633,6 +655,9 @@ bool GfxLoadCsg()
 
     auto pathHeaderPath = FindCsg1idatAtLocation(Config::Get().general.rct1Path);
     auto pathDataPath = FindCsg1datAtLocation(Config::Get().general.rct1Path);
+#if RCT2_BIG_ENDIAN
+    fprintf(stderr, "DEBUG [BE] GfxLoadCsg: header='%s' data='%s'\n", pathHeaderPath.c_str(), pathDataPath.c_str());
+#endif
     try
     {
         auto fileHeader = FileStream(pathHeaderPath, FileMode::open);
@@ -645,6 +670,11 @@ bool GfxLoadCsg()
 
         if (!CsgIsUsable(_csg))
         {
+#if RCT2_BIG_ENDIAN
+            fprintf(stderr, "DEBUG [BE] GfxLoadCsg: CsgIsUsable FAILED numEntries=%u totalSize=%u (expected: num=%u size=%u)\n",
+                _csg.header.numEntries, _csg.header.totalSize,
+                RCT1::Limits::kNumLLCsgEntries, RCT1::Limits::kLLCsg1DatFileSize);
+#endif
             LOG_WARNING("Cannot load CSG1.DAT, it has too few entries. Only CSG1.DAT from Loopy Landscapes will work.");
             return false;
         }
@@ -676,8 +706,11 @@ bool GfxLoadCsg()
         _csgLoaded = true;
         return true;
     }
-    catch (const std::exception&)
+    catch (const std::exception& e)
     {
+#if RCT2_BIG_ENDIAN
+        fprintf(stderr, "DEBUG [BE] GfxLoadCsg: EXCEPTION: %s\n", e.what());
+#endif
         _csg.elements.clear();
         _csg.elements.shrink_to_fit();
 
@@ -694,6 +727,8 @@ std::optional<Gx> GfxLoadGx(const std::vector<uint8_t>& buffer)
         Gx gx;
 
         gx.header = istream.ReadValue<G1Header>();
+        gx.header.numEntries = SWAP_IF_BE(gx.header.numEntries);
+        gx.header.totalSize = SWAP_IF_BE(gx.header.totalSize);
 
         // Read element headers
         gx.elements.resize(gx.header.numEntries);

@@ -14,10 +14,12 @@
 
     #include "../Date.h"
     #include "../Diagnostic.h"
+    #include "../core/Endianness.h"
     #include "../core/Path.hpp"
     #include "../core/String.hpp"
 
     #include <cerrno>
+    #include <cstdio>
     #include <clocale>
     #include <cstdlib>
     #include <cstring>
@@ -278,8 +280,15 @@ namespace OpenRCT2::Platform
             std::string fileName = Path::GetFileName(path);
             std::string directory = Path::GetDirectory(path);
 
+#if RCT2_BIG_ENDIAN
+            fprintf(stderr, "DEBUG [BE] ResolveCasing: looking for '%s' in directory '%s'\n", fileName.c_str(), directory.c_str());
+#endif
+
             struct dirent** files;
             auto count = scandir(directory.c_str(), &files, nullptr, alphasort);
+#if RCT2_BIG_ENDIAN
+            fprintf(stderr, "DEBUG [BE] ResolveCasing: scandir returned count=%d\n", count);
+#endif
             if (count != -1)
             {
                 // Find a file which matches by name (case insensitive)
@@ -287,6 +296,9 @@ namespace OpenRCT2::Platform
                 {
                     if (String::iequals(files[i]->d_name, fileName.c_str()))
                     {
+#if RCT2_BIG_ENDIAN
+                        fprintf(stderr, "DEBUG [BE] ResolveCasing: FOUND '%s'\n", files[i]->d_name);
+#endif
                         result = Path::Combine(directory, std::string(files[i]->d_name));
                         break;
                     }

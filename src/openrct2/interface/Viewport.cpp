@@ -1519,8 +1519,7 @@ namespace OpenRCT2
      */
     static bool IsPixelPresentRLE(const uint8_t* imgData, const int32_t x, const int32_t y)
     {
-        uint16_t lineOffset;
-        std::memcpy(&lineOffset, &imgData[y * sizeof(uint16_t)], sizeof(uint16_t));
+        uint16_t lineOffset = static_cast<uint16_t>(imgData[y * 2]) | (static_cast<uint16_t>(imgData[y * 2 + 1]) << 8);
         const uint8_t* data8 = imgData + lineOffset;
 
         bool lastDataLine = false;

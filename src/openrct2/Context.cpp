@@ -777,13 +777,17 @@ namespace OpenRCT2
                 loadTitleScreenFirstOnFail = true;
 
                 GameUnloadScripts();
+                std::fprintf(stderr, "DEBUG [BE] About to LoadObjects\n");
                 _objectManager->LoadObjects(result.RequiredObjects, true);
+                std::fprintf(stderr, "DEBUG [BE] After LoadObjects\n");
                 SetProgress(90, 100, STR_STRING_M_PERCENT);
 
                 MapAnimations::ClearAll();
                 // TODO: Have a separate GameState and exchange once loaded.
                 auto& gameState = ::getGameState();
+                std::fprintf(stderr, "DEBUG [BE] About to Import\n");
                 parkImporter->Import(gameState);
+                std::fprintf(stderr, "DEBUG [BE] After Import\n");
                 SetProgress(100, 100, STR_STRING_M_PERCENT);
 
                 // Reset viewport rendering inhibition

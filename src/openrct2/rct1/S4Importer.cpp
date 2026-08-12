@@ -17,6 +17,7 @@
 #include "../audio/Audio.h"
 #include "../core/BitSet.hpp"
 #include "../core/Console.hpp"
+#include "../core/Endianness.h"
 #include "../core/FileStream.h"
 #include "../core/Guard.hpp"
 #include "../core/IStream.hpp"
@@ -46,6 +47,7 @@
 #include "../peep/RideUseSystem.h"
 #include "../rct12/CSStringConverter.h"
 #include "../rct12/EntryList.h"
+#include <cstdio>
 #include "../rct12/ScenarioPatcher.h"
 #include "../ride/Ride.h"
 #include "../ride/RideData.h"
@@ -172,6 +174,8 @@ namespace OpenRCT2::RCT1
             _s4Path = path;
             _isScenario = isScenario;
             _gameVersion = DetectRCT1Version(_s4.GameVersion) & FILE_VERSION_MASK;
+            std::fprintf(stderr, "DEBUG _gameVersion=%d GameVersion=%u NumRides=%u\n",
+                _gameVersion, _s4.GameVersion, _s4.NumRides);
 
             // Only determine what objects we required to import this saved game
             InitialiseEntryMaps();
@@ -181,22 +185,60 @@ namespace OpenRCT2::RCT1
 
         void Import(GameState_t& gameState) override
         {
+#if RCT2_BIG_ENDIAN
+            std::fprintf(stderr, "DEBUG [BE] Import: start\n");
+            std::fflush(stderr);
+#endif
             Initialise(gameState);
+#if RCT2_BIG_ENDIAN
+            std::fprintf(stderr, "DEBUG [BE] Import: after Initialise\n");
+            std::fflush(stderr);
+#endif
 
+            std::fprintf(stderr, "DEBUG [BE] Import: ImportRides\n");
+            std::fflush(stderr);
             ImportRides();
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportRides\n");
+            std::fflush(stderr);
             ImportRideMeasurements();
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportRideMeasurements\n");
+            std::fflush(stderr);
             ImportEntities(gameState);
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportEntities\n");
+            std::fflush(stderr);
             ImportTileElements(gameState);
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportTileElements\n");
+            std::fflush(stderr);
             ImportMapAnimations();
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportMapAnimations\n");
+            std::fflush(stderr);
             ImportPeepSpawns(gameState);
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportPeepSpawns\n");
+            std::fflush(stderr);
             ImportFinance(gameState);
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportFinance\n");
+            std::fflush(stderr);
             ImportResearch(gameState);
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportResearch\n");
+            std::fflush(stderr);
             ImportParkName(gameState);
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportParkName\n");
+            std::fflush(stderr);
             ImportParkFlags(gameState);
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportParkFlags\n");
+            std::fflush(stderr);
             ImportClimate(gameState);
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportClimate\n");
+            std::fflush(stderr);
             ImportScenarioNameDetails(gameState);
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportScenarioNameDetails\n");
+            std::fflush(stderr);
             ImportScenarioObjective(gameState);
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportScenarioObjective\n");
+            std::fflush(stderr);
             ImportSavedView(gameState);
+            std::fprintf(stderr, "DEBUG [BE] Import: after ImportSavedView\n");
+            std::fflush(stderr);
 
             ConvertPeepAnimationTypeToObjects(gameState);
             ResetPeepSpriteBounds(gameState);
@@ -307,6 +349,150 @@ namespace OpenRCT2::RCT1
             return (oldParkValue * _parkValueConversionFactor) / 10;
         }
 
+        static void swapTileEl(RCT12TileElement& el)
+        {
+            auto type = el.getType();
+            uint8_t* bytes = reinterpret_cast<uint8_t*>(&el);
+            if (type == RCT12TileElementType::track)
+            {
+                uint16_t mazeEntry;
+                std::memcpy(&mazeEntry, bytes + 5, sizeof(uint16_t));
+                mazeEntry = SWAP_IF_BE(mazeEntry);
+                std::memcpy(bytes + 5, &mazeEntry, sizeof(uint16_t));
+            }
+            else if (type == RCT12TileElementType::largeScenery)
+            {
+                uint16_t entryIndex;
+                std::memcpy(&entryIndex, bytes + 4, sizeof(uint16_t));
+                entryIndex = SWAP_IF_BE(entryIndex);
+                std::memcpy(bytes + 4, &entryIndex, sizeof(uint16_t));
+            }
+        }
+
+        static void swapRCT12EntityBody(RCT1::Entity& entity)
+        {
+            auto& base = entity.Unknown;
+            auto id = base.EntityIdentifier;
+            if (id == RCT12EntityIdentifier::vehicle)
+            {
+                auto& v = entity.Vehicle;
+                v.RemainingDistance = SWAP_IF_BE(v.RemainingDistance);
+                v.Velocity = SWAP_IF_BE(v.Velocity);
+                v.Acceleration = SWAP_IF_BE(v.Acceleration);
+                v.TrackProgress = SWAP_IF_BE(v.TrackProgress);
+                v.TrackTypeAndDirection = SWAP_IF_BE(v.TrackTypeAndDirection);
+                v.TrackX = SWAP_IF_BE(v.TrackX);
+                v.TrackY = SWAP_IF_BE(v.TrackY);
+                v.TrackZ = SWAP_IF_BE(v.TrackZ);
+                v.NextVehicleOnTrain = SWAP_IF_BE(v.NextVehicleOnTrain);
+                v.PrevVehicleOnRide = SWAP_IF_BE(v.PrevVehicleOnRide);
+                v.NextVehicleOnRide = SWAP_IF_BE(v.NextVehicleOnRide);
+                v.Var44 = SWAP_IF_BE(v.Var44);
+                v.Mass = SWAP_IF_BE(v.Mass);
+                v.UpdateFlags = SWAP_IF_BE(v.UpdateFlags);
+                v.SwingPosition = SWAP_IF_BE(v.SwingPosition);
+                v.SwingSpeed = SWAP_IF_BE(v.SwingSpeed);
+                for (auto& p : v.Peep)
+                {
+                    p = SWAP_IF_BE(p);
+                }
+                v.SpinSpeed = SWAP_IF_BE(v.SpinSpeed);
+                v.Sound2Flags = SWAP_IF_BE(v.Sound2Flags);
+                v.VarC0 = SWAP_IF_BE(v.VarC0);
+                v.AnimationState = SWAP_IF_BE(v.AnimationState);
+                v.LostTimeOut = SWAP_IF_BE(v.LostTimeOut);
+            }
+            else if (id == RCT12EntityIdentifier::peep)
+            {
+                auto& p = entity.Peep;
+                p.NameStringID = SWAP_IF_BE(p.NameStringID);
+                p.NextX = SWAP_IF_BE(p.NextX);
+                p.NextY = SWAP_IF_BE(p.NextY);
+                p.DestinationX = SWAP_IF_BE(p.DestinationX);
+                p.DestinationY = SWAP_IF_BE(p.DestinationY);
+                p.NextInQueue = SWAP_IF_BE(p.NextInQueue);
+                p.TimeInQueue = SWAP_IF_BE(p.TimeInQueue);
+                p.ID = SWAP_IF_BE(p.ID);
+                p.CashInPocket = SWAP_IF_BE(p.CashInPocket);
+                p.CashSpent = SWAP_IF_BE(p.CashSpent);
+                p.ParkEntryTime = SWAP_IF_BE(p.ParkEntryTime);
+                p.PreviousRideTimeOut = SWAP_IF_BE(p.PreviousRideTimeOut);
+                p.peepFlagsLL = SWAP_IF_BE(p.peepFlagsLL);
+                p.PaidToEnter = SWAP_IF_BE(p.PaidToEnter);
+                p.PaidOnRides = SWAP_IF_BE(p.PaidOnRides);
+                p.PaidOnFood = SWAP_IF_BE(p.PaidOnFood);
+                p.PaidOnSouvenirs = SWAP_IF_BE(p.PaidOnSouvenirs);
+                p.itemFlagsAALL = SWAP_IF_BE(p.itemFlagsAALL);
+            }
+        }
+
+        static void swapS4(S4& s4)
+        {
+            s4.GameVersion = SWAP_IF_BE(s4.GameVersion);
+            s4.NumRides = SWAP_IF_BE(s4.NumRides);
+
+            for (auto& ride : s4.Rides)
+            {
+                ride.name = SWAP_IF_BE(ride.name);
+                ride.flags = SWAP_IF_BE(ride.flags);
+                ride.lastPeepInQueue[0] = SWAP_IF_BE(ride.lastPeepInQueue[0]);
+                ride.time[0] = SWAP_IF_BE(ride.time[0]);
+                ride.length[0] = SWAP_IF_BE(ride.length[0]);
+                ride.vehicles[0] = SWAP_IF_BE(ride.vehicles[0]);
+                ride.shelteredLength = SWAP_IF_BE(ride.shelteredLength);
+                ride.buildDate = SWAP_IF_BE(ride.buildDate);
+                ride.reliability = SWAP_IF_BE(ride.reliability);
+                ride.mechanic = SWAP_IF_BE(ride.mechanic);
+                ride.maxSpeed = SWAP_IF_BE(ride.maxSpeed);
+                ride.averageSpeed = SWAP_IF_BE(ride.averageSpeed);
+                ride.maxPositiveVerticalG = SWAP_IF_BE(ride.maxPositiveVerticalG);
+                ride.maxNegativeVerticalG = SWAP_IF_BE(ride.maxNegativeVerticalG);
+                ride.maxLateralG = SWAP_IF_BE(ride.maxLateralG);
+                ride.previousVerticalG = SWAP_IF_BE(ride.previousVerticalG);
+                ride.previousLateralG = SWAP_IF_BE(ride.previousLateralG);
+                ride.turnCountBanked = SWAP_IF_BE(ride.turnCountBanked);
+                ride.turnCountDefault = SWAP_IF_BE(ride.turnCountDefault);
+                ride.turnCountSloped = SWAP_IF_BE(ride.turnCountSloped);
+                ride.chairliftBullwheelRotation = SWAP_IF_BE(ride.chairliftBullwheelRotation);
+                ride.testingFlags = SWAP_IF_BE(ride.testingFlags);
+                ride.mazeTiles = SWAP_IF_BE(ride.mazeTiles);
+                ride.upkeepCost = SWAP_IF_BE(ride.upkeepCost);
+                ride.price = SWAP_IF_BE(ride.price);
+                ride.priceSecondary = SWAP_IF_BE(ride.priceSecondary);
+                ride.incomePerHour = SWAP_IF_BE(ride.incomePerHour);
+                ride.totalCustomers = SWAP_IF_BE(ride.totalCustomers);
+                ride.profit = SWAP_IF_BE(ride.profit);
+                ride.totalProfit = SWAP_IF_BE(ride.totalProfit);
+                ride.value = SWAP_IF_BE(ride.value);
+                ride.numCustomers[0] = SWAP_IF_BE(ride.numCustomers[0]);
+
+            }
+            for (auto& el : s4.TileElements)
+            {
+                swapTileEl(el);
+            }
+            for (auto& entity : s4.Entities)
+            {
+                swapRCT12EntityBody(entity);
+            }
+            // S4 uint16_t fields that need swapping near the struct end
+            s4.MapSizeUnits = SWAP_IF_BE(s4.MapSizeUnits);
+            s4.MapSizeUnkB = SWAP_IF_BE(s4.MapSizeUnkB);
+            s4.MapSize = SWAP_IF_BE(s4.MapSize);
+            s4.MapSizeMaxXY = SWAP_IF_BE(s4.MapSizeMaxXY);
+            s4.NumMapAnimations = SWAP_IF_BE(s4.NumMapAnimations);
+            for (auto& ma : s4.MapAnimations)
+            {
+                ma.x = SWAP_IF_BE(ma.x);
+                ma.y = SWAP_IF_BE(ma.y);
+            }
+            for (auto& ps : s4.PeepSpawn)
+            {
+                ps.x = SWAP_IF_BE(ps.x);
+                ps.y = SWAP_IF_BE(ps.y);
+            }
+        }
+
         std::unique_ptr<S4> ReadAndDecodeS4(IStream* stream, bool isScenario)
         {
             auto s4 = std::make_unique<S4>();
@@ -328,6 +514,7 @@ namespace OpenRCT2::RCT1
             if (decodedSize == sizeof(S4))
             {
                 std::memcpy(s4.get(), decodedData.get(), sizeof(S4));
+                swapS4(*s4);
                 return s4;
             }
 
@@ -629,6 +816,10 @@ namespace OpenRCT2::RCT1
             {
                 entryName = GetWaterObject(_s4.WaterColour);
             }
+#if RCT2_BIG_ENDIAN
+            fprintf(stderr, "DEBUG [BE] AddEntryForWater: _gameVersion=%d WaterColour=%d entryName='%.*s'\n",
+                _gameVersion, _s4.WaterColour, static_cast<int>(entryName.size()), entryName.data());
+#endif
             _waterEntry.GetOrAddEntry(entryName);
         }
 

@@ -11,6 +11,7 @@
 
 #include "SmallSceneryObject.h"
 
+#include "../core/Endianness.h"
 #include "../core/Guard.hpp"
 #include "../core/IStream.hpp"
 #include "../core/Json.hpp"
@@ -25,15 +26,15 @@ namespace OpenRCT2
     void SmallSceneryObject::ReadLegacy(IReadObjectContext* context, IStream* stream)
     {
         stream->Seek(6, STREAM_SEEK_CURRENT);
-        _legacyType.flags = stream->ReadValue<SmallSceneryFlags>();
+        _legacyType.flags = SWAP_IF_BE(stream->ReadValue<SmallSceneryFlags>());
         _legacyType.height = stream->ReadValue<uint8_t>();
         _legacyType.tool_id = static_cast<CursorID>(stream->ReadValue<uint8_t>());
-        _legacyType.price = stream->ReadValue<int16_t>() * 10;
-        _legacyType.removal_price = stream->ReadValue<int16_t>() * 10;
+        _legacyType.price = SWAP_IF_BE(stream->ReadValue<int16_t>()) * 10;
+        _legacyType.removal_price = SWAP_IF_BE(stream->ReadValue<int16_t>()) * 10;
         stream->Seek(4, STREAM_SEEK_CURRENT);
-        _legacyType.animation_delay = stream->ReadValue<uint16_t>();
-        _legacyType.animation_mask = stream->ReadValue<uint16_t>();
-        _legacyType.num_frames = stream->ReadValue<uint16_t>();
+        _legacyType.animation_delay = SWAP_IF_BE(stream->ReadValue<uint16_t>());
+        _legacyType.animation_mask = SWAP_IF_BE(stream->ReadValue<uint16_t>());
+        _legacyType.num_frames = SWAP_IF_BE(stream->ReadValue<uint16_t>());
         _legacyType.scenery_tab_id = kObjectEntryIndexNull;
         // Skip past the reserved space for the scenery_tab_id and an unused byte - the string table starts at offset 0x1C.
         stream->Seek(2, STREAM_SEEK_CURRENT);
@@ -41,6 +42,8 @@ namespace OpenRCT2
         GetStringTable().Read(context, stream, ObjectStringID::name);
 
         RCTObjectEntry sgEntry = stream->ReadValue<RCTObjectEntry>();
+        sgEntry.flags = SWAP_IF_BE(sgEntry.flags);
+        sgEntry.checksum = SWAP_IF_BE(sgEntry.checksum);
         SetPrimarySceneryGroup(ObjectEntryDescriptor(sgEntry));
 
         if (_legacyType.flags.has(SmallSceneryFlag::hasFrameOffsets))

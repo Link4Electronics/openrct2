@@ -12,6 +12,7 @@
 #include "../Context.h"
 #include "../PlatformEnvironment.h"
 #include "../audio/AudioContext.h"
+#include "../core/Endianness.h"
 #include "../core/File.h"
 #include "../core/Json.hpp"
 #include "../core/Path.hpp"
@@ -164,6 +165,7 @@ namespace OpenRCT2
                     {
                         auto originalPosition = stream->GetPosition();
                         auto numSounds = stream->ReadValue<uint32_t>();
+                        numSounds = SWAP_IF_BE(numSounds);
                         stream->SetPosition(originalPosition);
 
                         if (*entry.PathIndex >= numSounds)

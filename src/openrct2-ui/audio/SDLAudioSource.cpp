@@ -11,6 +11,7 @@
 
 #include <openrct2/Context.h>
 #include <openrct2/audio/AudioContext.h>
+#include <openrct2/core/Endianness.h>
 #include <stdexcept>
 
 using namespace OpenRCT2::Audio;
@@ -144,7 +145,7 @@ std::unique_ptr<SDLAudioSource> OpenRCT2::Audio::CreateAudioSource(SDL_RWops* rw
             format.format = AUDIO_U8;
             break;
         case 16:
-            format.format = AUDIO_S16LSB;
+            format.format = AUDIO_S16SYS;
             break;
         default:
             throw std::runtime_error("Unsupported bits per sample");
@@ -155,6 +156,15 @@ std::unique_ptr<SDLAudioSource> OpenRCT2::Audio::CreateAudioSource(SDL_RWops* rw
     std::vector<uint8_t> pcmData;
     pcmData.resize(pcmLength);
     SDL_RWread(rw, pcmData.data(), pcmLength, 1);
+
+#if RCT2_BIG_ENDIAN
+    if (format.format == AUDIO_S16SYS)
+    {
+        // CSS stores PCM samples as LE, byte-swap to native
+        for (size_t i = 0; i < pcmData.size(); i += 2)
+            std::swap(pcmData[i], pcmData[i + 1]);
+    }
+#endif
 
     return CreateMemoryAudioSource(format, format, std::move(pcmData));
 }

@@ -11,6 +11,7 @@
 
 #include "../config/ConfigTypes.h"
 #include "../core/DateTime.h"
+#include "../core/Endianness.h"
 #include "../core/StringTypes.h"
 
 #include <bit>
@@ -34,8 +35,10 @@
     #define MAX_PATH 260
 #endif
 
+#if !RCT2_BIG_ENDIAN
 static_assert(
     std::endian::native == std::endian::little, "OpenRCT2 is known to be broken on big endian. Proceed with caution!");
+#endif
 
 enum class SpecialFolder
 {

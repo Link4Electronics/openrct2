@@ -175,6 +175,7 @@ namespace OpenRCT2::Ui::Windows
                         .right = static_cast<int16_t>(baseCheckBox.right + 5),
                         .top = y,
                         .bottom = static_cast<int16_t>(y + kListRowHeight),
+                        .content = kWidgetContentEmpty,
                         .text = def.group,
                     };
 
@@ -191,6 +192,7 @@ namespace OpenRCT2::Ui::Windows
                     .right = baseCheckBox.right,
                     .top = y,
                     .bottom = static_cast<int16_t>(y + kListRowHeight + 3),
+                    .content = kWidgetContentEmpty,
                     .text = def.caption,
                 };
 

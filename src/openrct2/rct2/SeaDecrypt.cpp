@@ -7,6 +7,7 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
+#include "../core/Endianness.h"
 #include "../core/File.h"
 #include "../core/Numerics.hpp"
 #include "../core/Path.hpp"
@@ -92,6 +93,7 @@ std::vector<uint8_t> DecryptSea(const fs::path& path)
     size_t inputSize = data.size() - 4;
     uint32_t checksum;
     std::memcpy(&checksum, data.data() + inputSize, sizeof(checksum));
+    checksum = SWAP_IF_BE(checksum);
     data.resize(inputSize);
 
     Decrypt(data, key);

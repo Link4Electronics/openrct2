@@ -12,6 +12,7 @@
 #include "../Game.h"
 #include "../GameState.h"
 #include "../ParkImporter.h"
+#include "../core/Endianness.h"
 #include "../core/FileStream.h"
 #include "../core/Path.hpp"
 #include "../core/String.hpp"
@@ -70,6 +71,332 @@ using namespace OpenRCT2::SawyerCoding;
 namespace OpenRCT2::RCT2
 {
 #define DECRYPT_MONEY(money) (static_cast<money32>(Numerics::rol32((money) ^ 0xF4EC9621, 13)))
+
+    static void swapS6Hdr(S6Header& hdr)
+    {
+        hdr.NumPackedObjects = SWAP_IF_BE(hdr.NumPackedObjects);
+        hdr.Version = SWAP_IF_BE(hdr.Version);
+        hdr.MagicNumber = SWAP_IF_BE(hdr.MagicNumber);
+    }
+
+    static void swapS6Info(S6Info& info)
+    {
+        info.ObjectiveArg2 = SWAP_IF_BE(info.ObjectiveArg2);
+        info.ObjectiveArg3 = SWAP_IF_BE(info.ObjectiveArg3);
+        info.Entry.flags = SWAP_IF_BE(info.Entry.flags);
+        info.Entry.checksum = SWAP_IF_BE(info.Entry.checksum);
+    }
+
+    static void swapRCTObjectEntry(RCTObjectEntry& entry)
+    {
+        entry.flags = SWAP_IF_BE(entry.flags);
+        entry.checksum = SWAP_IF_BE(entry.checksum);
+    }
+
+    static void swapTileEl(RCT12TileElement& el)
+    {
+        auto type = el.getType();
+        uint8_t* bytes = reinterpret_cast<uint8_t*>(&el);
+        if (type == RCT12TileElementType::track)
+        {
+            uint16_t mazeEntry;
+            std::memcpy(&mazeEntry, bytes + 5, sizeof(uint16_t));
+            mazeEntry = SWAP_IF_BE(mazeEntry);
+            std::memcpy(bytes + 5, &mazeEntry, sizeof(uint16_t));
+        }
+        else if (type == RCT12TileElementType::largeScenery)
+        {
+            uint16_t entryIndex;
+            std::memcpy(&entryIndex, bytes + 4, sizeof(uint16_t));
+            entryIndex = SWAP_IF_BE(entryIndex);
+            std::memcpy(bytes + 4, &entryIndex, sizeof(uint16_t));
+        }
+    }
+
+    static void swapRCT12EntityBody(RCT2::Entity& entity)
+    {
+        auto& base = entity.Unknown;
+        auto id = base.EntityIdentifier;
+        if (id == RCT12EntityIdentifier::vehicle)
+        {
+            auto& v = entity.Vehicle;
+            v.RemainingDistance = SWAP_IF_BE(v.RemainingDistance);
+            v.Velocity = SWAP_IF_BE(v.Velocity);
+            v.Acceleration = SWAP_IF_BE(v.Acceleration);
+            v.TrackProgress = SWAP_IF_BE(v.TrackProgress);
+            v.TrackTypeAndDirection = SWAP_IF_BE(v.TrackTypeAndDirection);
+            v.TrackX = SWAP_IF_BE(v.TrackX);
+            v.TrackY = SWAP_IF_BE(v.TrackY);
+            v.TrackZ = SWAP_IF_BE(v.TrackZ);
+            v.NextVehicleOnTrain = SWAP_IF_BE(v.NextVehicleOnTrain);
+            v.PrevVehicleOnRide = SWAP_IF_BE(v.PrevVehicleOnRide);
+            v.NextVehicleOnRide = SWAP_IF_BE(v.NextVehicleOnRide);
+            v.Var44 = SWAP_IF_BE(v.Var44);
+            v.Mass = SWAP_IF_BE(v.Mass);
+            v.UpdateFlags = SWAP_IF_BE(v.UpdateFlags);
+            v.SwingPosition = SWAP_IF_BE(v.SwingPosition);
+            v.SwingSpeed = SWAP_IF_BE(v.SwingSpeed);
+            for (auto& p : v.Peep)
+            {
+                p = SWAP_IF_BE(p);
+            }
+            v.SpinSpeed = SWAP_IF_BE(v.SpinSpeed);
+            v.Sound2Flags = SWAP_IF_BE(v.Sound2Flags);
+            v.VarC0 = SWAP_IF_BE(v.VarC0);
+            v.AnimationState = SWAP_IF_BE(v.AnimationState);
+            v.LostTimeOut = SWAP_IF_BE(v.LostTimeOut);
+        }
+        else if (id == RCT12EntityIdentifier::peep)
+        {
+            auto& p = entity.Peep;
+            p.NameStringIdx = SWAP_IF_BE(p.NameStringIdx);
+            p.NextX = SWAP_IF_BE(p.NextX);
+            p.NextY = SWAP_IF_BE(p.NextY);
+            p.DestinationX = SWAP_IF_BE(p.DestinationX);
+            p.DestinationY = SWAP_IF_BE(p.DestinationY);
+            p.ItemExtraFlags = SWAP_IF_BE(p.ItemExtraFlags);
+            p.MechanicTimeSinceCall = SWAP_IF_BE(p.MechanicTimeSinceCall);
+            p.TimeInQueue = SWAP_IF_BE(p.TimeInQueue);
+            p.Id = SWAP_IF_BE(p.Id);
+            p.CashInPocket = SWAP_IF_BE(p.CashInPocket);
+            p.CashSpent = SWAP_IF_BE(p.CashSpent);
+            p.ParkEntryTime = SWAP_IF_BE(p.ParkEntryTime);
+            p.PreviousRideTimeOut = SWAP_IF_BE(p.PreviousRideTimeOut);
+            p.PeepFlags = SWAP_IF_BE(p.PeepFlags);
+            p.PaidToEnter = SWAP_IF_BE(p.PaidToEnter);
+            p.PaidOnRides = SWAP_IF_BE(p.PaidOnRides);
+            p.PaidOnFood = SWAP_IF_BE(p.PaidOnFood);
+            p.PaidOnSouvenirs = SWAP_IF_BE(p.PaidOnSouvenirs);
+            p.ItemStandardFlags = SWAP_IF_BE(p.ItemStandardFlags);
+        }
+    }
+
+    static void swapS6Data(S6Data& s6)
+    {
+        swapS6Hdr(s6.Header);
+        swapS6Info(s6.Info);
+        for (auto& obj : s6.Objects)
+        {
+            swapRCTObjectEntry(obj);
+        }
+        s6.ElapsedMonths = SWAP_IF_BE(s6.ElapsedMonths);
+        s6.CurrentDay = SWAP_IF_BE(s6.CurrentDay);
+        s6.ScenarioTicks = SWAP_IF_BE(s6.ScenarioTicks);
+        s6.ScenarioSrand0 = SWAP_IF_BE(s6.ScenarioSrand0);
+        s6.ScenarioSrand1 = SWAP_IF_BE(s6.ScenarioSrand1);
+        for (auto& el : s6.TileElements)
+        {
+            swapTileEl(el);
+        }
+        s6.NextFreeTileElementPointerIndex = SWAP_IF_BE(s6.NextFreeTileElementPointerIndex);
+        s6.ParkName = SWAP_IF_BE(s6.ParkName);
+        s6.ParkNameArgs = SWAP_IF_BE(s6.ParkNameArgs);
+        s6.InitialCash = SWAP_IF_BE(s6.InitialCash);
+        s6.CurrentLoan = SWAP_IF_BE(s6.CurrentLoan);
+        s6.ParkFlags = SWAP_IF_BE(s6.ParkFlags);
+        s6.ParkEntranceFee = SWAP_IF_BE(s6.ParkEntranceFee);
+        s6.GuestsInPark = SWAP_IF_BE(s6.GuestsInPark);
+        s6.GuestsHeadingForPark = SWAP_IF_BE(s6.GuestsHeadingForPark);
+        s6.LastGuestsInPark = SWAP_IF_BE(s6.LastGuestsInPark);
+        s6.ParkRating = SWAP_IF_BE(s6.ParkRating);
+        s6.LastResearchedItemSubject = SWAP_IF_BE(s6.LastResearchedItemSubject);
+        s6.NextResearchItem = SWAP_IF_BE(s6.NextResearchItem);
+        s6.ResearchProgress = SWAP_IF_BE(s6.ResearchProgress);
+        s6.ParkSize = SWAP_IF_BE(s6.ParkSize);
+        s6.TotalRideValueForMoney = SWAP_IF_BE(s6.TotalRideValueForMoney);
+        s6.GuestGenerationProbability = SWAP_IF_BE(s6.GuestGenerationProbability);
+        s6.MaximumLoan = SWAP_IF_BE(s6.MaximumLoan);
+        s6.GuestInitialCash = SWAP_IF_BE(s6.GuestInitialCash);
+        s6.ObjectiveCurrency = SWAP_IF_BE(s6.ObjectiveCurrency);
+        s6.ObjectiveGuests = SWAP_IF_BE(s6.ObjectiveGuests);
+        s6.CurrentExpenditure = SWAP_IF_BE(s6.CurrentExpenditure);
+        s6.CurrentProfit = SWAP_IF_BE(s6.CurrentProfit);
+        s6.WeeklyProfitAverageDividend = SWAP_IF_BE(s6.WeeklyProfitAverageDividend);
+        s6.WeeklyProfitAverageDivisor = SWAP_IF_BE(s6.WeeklyProfitAverageDivisor);
+        s6.ParkValue = SWAP_IF_BE(s6.ParkValue);
+        s6.CompletedCompanyValue = SWAP_IF_BE(s6.CompletedCompanyValue);
+        s6.TotalAdmissions = SWAP_IF_BE(s6.TotalAdmissions);
+        s6.IncomeFromAdmissions = SWAP_IF_BE(s6.IncomeFromAdmissions);
+        s6.CompanyValue = SWAP_IF_BE(s6.CompanyValue);
+        s6.LandPrice = SWAP_IF_BE(s6.LandPrice);
+        s6.ConstructionRightsPrice = SWAP_IF_BE(s6.ConstructionRightsPrice);
+        s6.GameVersionNumber = SWAP_IF_BE(s6.GameVersionNumber);
+        s6.CompletedCompanyValueRecord = SWAP_IF_BE(s6.CompletedCompanyValueRecord);
+        s6.HistoricalProfit = SWAP_IF_BE(s6.HistoricalProfit);
+        s6.Cash = SWAP_IF_BE(s6.Cash);
+        for (auto& award : s6.Awards)
+        {
+            award.Time = SWAP_IF_BE(award.Time);
+            award.Type = SWAP_IF_BE(award.Type);
+        }
+        for (auto& balance : s6.BalanceHistory)
+        {
+            balance = SWAP_IF_BE(balance);
+        }
+        for (auto& profit : s6.WeeklyProfitHistory)
+        {
+            profit = SWAP_IF_BE(profit);
+        }
+        for (auto& pv : s6.ParkValueHistory)
+        {
+            pv = SWAP_IF_BE(pv);
+        }
+        for (auto& head : s6.EntityListsHead)
+        {
+            head = SWAP_IF_BE(head);
+        }
+        for (auto& count : s6.EntityListsCount)
+        {
+            count = SWAP_IF_BE(count);
+        }
+        for (auto& item : s6.ResearchItems)
+        {
+            item.RawValue = SWAP_IF_BE(item.RawValue);
+        }
+        for (auto& ride : s6.Rides)
+        {
+            ride.name = SWAP_IF_BE(ride.name);
+            ride.nameArguments = SWAP_IF_BE(ride.nameArguments);
+            for (auto& v : ride.vehicles)
+            {
+                v = SWAP_IF_BE(v);
+            }
+            for (auto& lp : ride.lastPeepInQueue)
+            {
+                lp = SWAP_IF_BE(lp);
+            }
+            for (auto& l : ride.length)
+            {
+                l = SWAP_IF_BE(l);
+            }
+            for (auto& t : ride.time)
+            {
+                t = SWAP_IF_BE(t);
+            }
+            ride.maxSpeed = SWAP_IF_BE(ride.maxSpeed);
+            ride.averageSpeed = SWAP_IF_BE(ride.averageSpeed);
+            ride.maxPositiveVerticalG = SWAP_IF_BE(ride.maxPositiveVerticalG);
+            ride.maxNegativeVerticalG = SWAP_IF_BE(ride.maxNegativeVerticalG);
+            ride.maxLateralG = SWAP_IF_BE(ride.maxLateralG);
+            ride.previousVerticalG = SWAP_IF_BE(ride.previousVerticalG);
+            ride.previousLateralG = SWAP_IF_BE(ride.previousLateralG);
+            ride.testingFlags = SWAP_IF_BE(ride.testingFlags);
+            ride.curNumCustomers = SWAP_IF_BE(ride.curNumCustomers);
+            ride.numCustomersTimeout = SWAP_IF_BE(ride.numCustomersTimeout);
+            ride.price = SWAP_IF_BE(ride.price);
+            ride.chairliftBullwheelRotation = SWAP_IF_BE(ride.chairliftBullwheelRotation);
+            for (auto& nc : ride.numCustomers)
+            {
+                nc = SWAP_IF_BE(nc);
+            }
+            ride.totalCustomers = SWAP_IF_BE(ride.totalCustomers);
+            ride.totalProfit = SWAP_IF_BE(ride.totalProfit);
+            ride.turnCountDefault = SWAP_IF_BE(ride.turnCountDefault);
+            ride.turnCountBanked = SWAP_IF_BE(ride.turnCountBanked);
+            ride.turnCountSloped = SWAP_IF_BE(ride.turnCountSloped);
+            ride.value = SWAP_IF_BE(ride.value);
+            ride.shelteredLength = SWAP_IF_BE(ride.shelteredLength);
+            ride.var11C = SWAP_IF_BE(ride.var11C);
+            ride.buildDate = SWAP_IF_BE(ride.buildDate);
+            ride.upkeepCost = SWAP_IF_BE(ride.upkeepCost);
+            ride.raceWinner = SWAP_IF_BE(ride.raceWinner);
+            ride.musicPosition = SWAP_IF_BE(ride.musicPosition);
+            ride.priceSecondary = SWAP_IF_BE(ride.priceSecondary);
+            ride.reliability = SWAP_IF_BE(ride.reliability);
+            ride.incomePerHour = SWAP_IF_BE(ride.incomePerHour);
+            ride.profit = SWAP_IF_BE(ride.profit);
+            ride.vehicleChangeTimeout = SWAP_IF_BE(ride.vehicleChangeTimeout);
+            ride.guestsFavourite = SWAP_IF_BE(ride.guestsFavourite);
+            ride.flags = SWAP_IF_BE(ride.flags);
+            ride.totalAirTime = SWAP_IF_BE(ride.totalAirTime);
+            ride.cableLiftX = SWAP_IF_BE(ride.cableLiftX);
+            ride.cableLiftY = SWAP_IF_BE(ride.cableLiftY);
+            ride.cableLift = SWAP_IF_BE(ride.cableLift);
+            ride.slidePeep = SWAP_IF_BE(ride.slidePeep);
+        }
+        for (auto& news : s6.recentMessages)
+        {
+            news.Ticks = SWAP_IF_BE(news.Ticks);
+            news.MonthYear = SWAP_IF_BE(news.MonthYear);
+            news.Assoc = SWAP_IF_BE(news.Assoc);
+        }
+        for (auto& news : s6.archivedMessages)
+        {
+            news.Ticks = SWAP_IF_BE(news.Ticks);
+            news.MonthYear = SWAP_IF_BE(news.MonthYear);
+            news.Assoc = SWAP_IF_BE(news.Assoc);
+        }
+        s6.SavedViewX = SWAP_IF_BE(s6.SavedViewX);
+        s6.SavedViewY = SWAP_IF_BE(s6.SavedViewY);
+        for (auto& anim : s6.MapAnimations)
+        {
+            anim.x = SWAP_IF_BE(anim.x);
+            anim.y = SWAP_IF_BE(anim.y);
+        }
+        s6.NumMapAnimations = SWAP_IF_BE(s6.NumMapAnimations);
+        {
+            auto& rrd = s6.RideRatingsCalcData;
+            rrd.ProximityX = SWAP_IF_BE(rrd.ProximityX);
+            rrd.ProximityY = SWAP_IF_BE(rrd.ProximityY);
+            rrd.ProximityZ = SWAP_IF_BE(rrd.ProximityZ);
+            rrd.ProximityStartX = SWAP_IF_BE(rrd.ProximityStartX);
+            rrd.ProximityStartY = SWAP_IF_BE(rrd.ProximityStartY);
+            rrd.ProximityStartZ = SWAP_IF_BE(rrd.ProximityStartZ);
+            rrd.ProximityTotal = SWAP_IF_BE(rrd.ProximityTotal);
+            for (auto& score : rrd.ProximityScores)
+            {
+                score = SWAP_IF_BE(score);
+            }
+            rrd.NumBrakes = SWAP_IF_BE(rrd.NumBrakes);
+            rrd.NumReversers = SWAP_IF_BE(rrd.NumReversers);
+            rrd.StationFlags = SWAP_IF_BE(rrd.StationFlags);
+        }
+        for (auto& m : s6.RideMeasurements)
+        {
+            m.LastUseTick = SWAP_IF_BE(m.LastUseTick);
+            m.NumItems = SWAP_IF_BE(m.NumItems);
+            m.CurrentItem = SWAP_IF_BE(m.CurrentItem);
+        }
+        s6.NextGuestIndex = SWAP_IF_BE(s6.NextGuestIndex);
+        for (auto& banner : s6.Banners)
+        {
+            banner.StringID = SWAP_IF_BE(banner.StringID);
+        }
+        for (auto& entity : s6.Entities)
+        {
+            entity.Unknown.NextInQuadrant = SWAP_IF_BE(entity.Unknown.NextInQuadrant);
+            entity.Unknown.Next = SWAP_IF_BE(entity.Unknown.Next);
+            entity.Unknown.Previous = SWAP_IF_BE(entity.Unknown.Previous);
+            entity.Unknown.EntityIndex = SWAP_IF_BE(entity.Unknown.EntityIndex);
+            entity.Unknown.Flags = SWAP_IF_BE(entity.Unknown.Flags);
+            entity.Unknown.x = SWAP_IF_BE(entity.Unknown.x);
+            entity.Unknown.y = SWAP_IF_BE(entity.Unknown.y);
+            entity.Unknown.z = SWAP_IF_BE(entity.Unknown.z);
+            entity.Unknown.SpriteLeft = SWAP_IF_BE(entity.Unknown.SpriteLeft);
+            entity.Unknown.SpriteTop = SWAP_IF_BE(entity.Unknown.SpriteTop);
+            entity.Unknown.SpriteRight = SWAP_IF_BE(entity.Unknown.SpriteRight);
+            entity.Unknown.SpriteBottom = SWAP_IF_BE(entity.Unknown.SpriteBottom);
+            swapRCT12EntityBody(entity);
+        }
+        s6.WeatherUpdateTimer = SWAP_IF_BE(s6.WeatherUpdateTimer);
+        for (int i = 0; i < Limits::kMaxParkEntrances; i++)
+        {
+            s6.ParkEntranceX[i] = SWAP_IF_BE(s6.ParkEntranceX[i]);
+            s6.ParkEntranceY[i] = SWAP_IF_BE(s6.ParkEntranceY[i]);
+            s6.ParkEntranceZ[i] = SWAP_IF_BE(s6.ParkEntranceZ[i]);
+        }
+        s6.WidePathTileLoopX = SWAP_IF_BE(s6.WidePathTileLoopX);
+        s6.WidePathTileLoopY = SWAP_IF_BE(s6.WidePathTileLoopY);
+        s6.SamePriceThroughout = SWAP_IF_BE(s6.SamePriceThroughout);
+        s6.SamePriceThroughoutExtended = SWAP_IF_BE(s6.SamePriceThroughoutExtended);
+        s6.SuggestedMaxGuests = SWAP_IF_BE(s6.SuggestedMaxGuests);
+        s6.ParkRatingWarningDays = SWAP_IF_BE(s6.ParkRatingWarningDays);
+        s6.MapBaseZ = SWAP_IF_BE(s6.MapBaseZ);
+        s6.MapSize = SWAP_IF_BE(s6.MapSize);
+        s6.MapSizeUnits = SWAP_IF_BE(s6.MapSizeUnits);
+        s6.MapSizeMinus2 = SWAP_IF_BE(s6.MapSizeMinus2);
+        s6.MapMaxXy = SWAP_IF_BE(s6.MapMaxXy);
+    }
 
     /**
      * Class to import RollerCoaster Tycoon 2 scenarios (*.SC6) and saved games (*.SV6).
@@ -140,6 +467,7 @@ namespace OpenRCT2::RCT2
         {
             auto chunkReader = SawyerChunkReader(stream);
             chunkReader.ReadChunk(&_s6.Header, sizeof(_s6.Header));
+            swapS6Hdr(_s6.Header);
 
             LOG_VERBOSE("saved game classic_flag = 0x%02x", _s6.Header.ClassicFlag);
             if (isScenario)
@@ -149,6 +477,7 @@ namespace OpenRCT2::RCT2
                     throw std::runtime_error("Park is not a scenario.");
                 }
                 chunkReader.ReadChunk(&_s6.Info, sizeof(_s6.Info));
+                swapS6Info(_s6.Info);
 
                 // If the name or the details contain a colour code, they might be in UTF-8 already.
                 // This is caused by a bug that was in OpenRCT2 for 3 years.
@@ -211,6 +540,7 @@ namespace OpenRCT2::RCT2
                 ReadChunk6(chunkReader, 488816);
             }
 
+            swapS6Data(_s6);
             _isScenario = isScenario;
             _s6Path = path;
 

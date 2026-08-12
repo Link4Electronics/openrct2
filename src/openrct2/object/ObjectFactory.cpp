@@ -15,6 +15,7 @@
 #include "../PlatformEnvironment.h"
 #include "../audio/Audio.h"
 #include "../core/Console.hpp"
+#include "../core/Endianness.h"
 #include "../core/EnumMap.hpp"
 #include "../core/File.h"
 #include "../core/FileStream.h"
@@ -287,6 +288,8 @@ namespace OpenRCT2::ObjectFactory
             auto chunkReader = SawyerChunkReader(&fs);
 
             RCTObjectEntry entry = fs.ReadValue<RCTObjectEntry>();
+            entry.flags = SWAP_IF_BE(entry.flags);
+            entry.checksum = SWAP_IF_BE(entry.checksum);
 
             if (entry.GetType() != ObjectType::scenarioMeta)
             {

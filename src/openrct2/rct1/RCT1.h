@@ -425,8 +425,13 @@ namespace OpenRCT2::RCT1
             uint16_t TrackProgress; // 0x34
             struct
             {
+#if RCT2_BIG_ENDIAN
+                uint8_t Var35;
+                int8_t Var34;
+#else
                 int8_t Var34;
                 uint8_t Var35;
+#endif
             };
         };
         union
@@ -456,8 +461,13 @@ namespace OpenRCT2::RCT1
             int16_t CurrentTime;   // 0x4C
             struct
             {
+#if RCT2_BIG_ENDIAN
+                int8_t FerrisWheelVar1; // 0x4C (low byte on BE)
+                int8_t FerrisWheelVar0; // 0x4D (high byte on BE)
+#else
                 int8_t FerrisWheelVar0; // 0x4C
                 int8_t FerrisWheelVar1; // 0x4D
+#endif
             };
         };
         int16_t SwingSpeed;

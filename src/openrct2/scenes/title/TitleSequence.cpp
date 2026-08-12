@@ -424,12 +424,12 @@ namespace OpenRCT2::Title
 
         while (true)
         {
-            int32_t c = 0;
+            char c = 0;
             if (stream->TryRead(&c, 1) != 1)
             {
-                c = EOF;
+                c = '\0';
             }
-            if (c == '\n' || c == '\r' || c == EOF)
+            if (c == '\n' || c == '\r' || c == '\0')
             {
                 parts[part][cindex] = 0;
                 return;

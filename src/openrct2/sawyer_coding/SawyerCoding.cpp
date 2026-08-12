@@ -104,8 +104,14 @@ namespace OpenRCT2::SawyerCoding
         {
             dst[i + 1] = Numerics::ror8(dst[i + 1], 3);
 
-            uint32_t* code = reinterpret_cast<uint32_t*>(&dst[i]);
-            *code = Numerics::rol32(*code, 9);
+            // Read as little-endian to be endian-safe
+            uint32_t code = dst[i] | (static_cast<uint32_t>(dst[i + 1]) << 8)
+                | (static_cast<uint32_t>(dst[i + 2]) << 16) | (static_cast<uint32_t>(dst[i + 3]) << 24);
+            code = Numerics::rol32(code, 9);
+            dst[i] = code & 0xFF;
+            dst[i + 1] = (code >> 8) & 0xFF;
+            dst[i + 2] = (code >> 16) & 0xFF;
+            dst[i + 3] = (code >> 24) & 0xFF;
         }
 
         return decodedLength;
@@ -152,7 +158,7 @@ namespace OpenRCT2::SawyerCoding
         if (length < 4)
             return 0;
 
-        uint32_t file_checksum = *(reinterpret_cast<const uint32_t*>(&src[length - 4]));
+        uint32_t file_checksum = src[length - 4] | (src[length - 3] << 8) | (src[length - 2] << 16) | (src[length - 1] << 24);
 
         uint32_t checksum = 0;
         for (size_t i = 0; i < length - 4; i++)
@@ -391,7 +397,7 @@ namespace OpenRCT2::SawyerCoding
 
         // Currently can't detect TD4, as the checksum is the same as SC4 (need alternative method)
 
-        uint32_t checksum = *(reinterpret_cast<const uint32_t*>(&src[length - 4]));
+        uint32_t checksum = src[length - 4] | (src[length - 3] << 8) | (src[length - 2] << 16) | (src[length - 1] << 24);
         uint32_t actualChecksum = 0;
         for (size_t i = 0; i < length - 4; i++)
         {

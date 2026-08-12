@@ -13,6 +13,7 @@
 
 #include "../OpenRCT2.h"
 #include "../audio/Audio.h"
+#include "../core/Endianness.h"
 #include "../core/EnumMap.hpp"
 #include "../core/FlagHolder.hpp"
 #include "../core/IStream.hpp"
@@ -158,7 +159,7 @@ namespace OpenRCT2
         _shouldLoadImages = context->ShouldLoadImages();
 
         stream->Seek(8, STREAM_SEEK_CURRENT);
-        _legacyType.flags.holder = stream->ReadValue<uint32_t>();
+        _legacyType.flags.holder = SWAP_IF_BE(stream->ReadValue<uint32_t>());
         for (auto& rideType : _legacyType.ride_type)
         {
             rideType = stream->ReadValue<uint8_t>();
@@ -236,7 +237,7 @@ namespace OpenRCT2
             uint16_t numPeepLoadingPositions = stream->ReadValue<uint8_t>();
             if (numPeepLoadingPositions == 255)
             {
-                numPeepLoadingPositions = stream->ReadValue<uint16_t>();
+                numPeepLoadingPositions = SWAP_IF_BE(stream->ReadValue<uint16_t>());
             }
 
             if (_legacyType.Cars[i].flags.has(CarEntryFlag::loadingWaypoints))
@@ -258,7 +259,7 @@ namespace OpenRCT2
                     entry[1].y = stream->ReadValue<int8_t>();
                     entry[2].x = stream->ReadValue<int8_t>();
                     entry[2].y = stream->ReadValue<int8_t>();
-                    stream->ReadValue<uint16_t>(); // Skip blanks
+                    SWAP_IF_BE(stream->ReadValue<uint16_t>()); // Skip blanks
 
                     _peepLoadingWaypoints[i].push_back(std::move(entry));
                 }
@@ -423,22 +424,22 @@ namespace OpenRCT2
 
     void RideObject::ReadLegacyCar([[maybe_unused]] IReadObjectContext* context, IStream* stream, CarEntry& car)
     {
-        car.TabRotationMask = stream->ReadValue<uint16_t>();
+        car.TabRotationMask = SWAP_IF_BE(stream->ReadValue<uint16_t>());
         stream->Seek(2 * 1, STREAM_SEEK_CURRENT);
-        car.spacing = stream->ReadValue<uint32_t>();
-        car.car_mass = stream->ReadValue<uint16_t>();
+        car.spacing = SWAP_IF_BE(stream->ReadValue<uint32_t>());
+        car.car_mass = SWAP_IF_BE(stream->ReadValue<uint16_t>());
         car.tab_height = stream->ReadValue<int8_t>();
         car.num_seats = stream->ReadValue<uint8_t>();
         CarSpriteFlags carSpriteFlags;
-        carSpriteFlags.holder = stream->ReadValue<uint16_t>();
+        carSpriteFlags.holder = SWAP_IF_BE(stream->ReadValue<uint16_t>());
         car.spriteWidth = stream->ReadValue<uint8_t>();
         car.spriteHeightNegative = stream->ReadValue<uint8_t>();
         car.spriteHeightPositive = stream->ReadValue<uint8_t>();
         auto legacyAnimation = stream->ReadValue<uint8_t>();
-        car.flags.holder = stream->ReadValue<uint32_t>();
+        car.flags.holder = SWAP_IF_BE(stream->ReadValue<uint32_t>());
         // Implied in vanilla, but can be turned off in OpenRCT2.
         car.flags.set(CarEntryFlag::enableBodyColour);
-        car.base_num_frames = stream->ReadValue<uint16_t>();
+        car.base_num_frames = SWAP_IF_BE(stream->ReadValue<uint16_t>());
         stream->Seek(15 * 4, STREAM_SEEK_CURRENT);
         car.no_seating_rows = stream->ReadValue<uint8_t>();
         car.spinning_inertia = stream->ReadValue<uint8_t>();

@@ -11,6 +11,7 @@
 
 // Structures shared between both RCT1 and RCT2.
 
+#include "../core/Endianness.h"
 #include "../core/EnumUtils.hpp"
 #include "../core/FlagHolder.hpp"
 #include "../core/Money.hpp"
@@ -503,7 +504,11 @@ struct RCT12xy8
     {
         struct
         {
+#if RCT2_BIG_ENDIAN
+            uint8_t y, x;
+#else
             uint8_t x, y;
+#endif
         };
         uint16_t xy;
     };

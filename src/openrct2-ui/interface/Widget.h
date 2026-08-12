@@ -53,6 +53,7 @@ namespace OpenRCT2::Ui
         out.type = type;
         out.colour = static_cast<uint8_t>(colour);
         out.content = content;
+        out.text = static_cast<StringId>(content);
         out.tooltip = tooltip;
 
         return out;

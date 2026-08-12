@@ -12,6 +12,7 @@
 #include "SceneryGroupObject.h"
 
 #include "../Context.h"
+#include "../core/Endianness.h"
 #include "../core/Guard.hpp"
 #include "../core/IStream.hpp"
 #include "../core/Json.hpp"
@@ -46,7 +47,7 @@ namespace OpenRCT2
         stream->Seek(1, STREAM_SEEK_CURRENT); // Pad107;
         _legacyType.priority = stream->ReadValue<uint8_t>();
         stream->Seek(1, STREAM_SEEK_CURRENT); // Pad109;
-        _legacyType.entertainer_costumes = stream->ReadValue<uint32_t>();
+        _legacyType.entertainer_costumes = SWAP_IF_BE(stream->ReadValue<uint32_t>());
 
         GetStringTable().Read(context, stream, ObjectStringID::name);
         _items = ReadItems(stream);
@@ -140,6 +141,8 @@ namespace OpenRCT2
         {
             stream->Seek(-1, STREAM_SEEK_CURRENT);
             auto entry = stream->ReadValue<RCTObjectEntry>();
+            entry.flags = SWAP_IF_BE(entry.flags);
+            entry.checksum = SWAP_IF_BE(entry.checksum);
             items.emplace_back(entry);
         }
         return items;

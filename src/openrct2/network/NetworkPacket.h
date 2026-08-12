@@ -68,7 +68,7 @@ namespace OpenRCT2::Network
             {
                 T local;
                 std::memcpy(&local, &getData()[bytesRead], sizeof(local));
-                value = ByteSwapBE(local);
+                value = SWAP_IF_LE(local);
                 bytesRead += sizeof(value);
             }
             return *this;
@@ -77,7 +77,7 @@ namespace OpenRCT2::Network
         template<typename T>
         Packet& operator<<(T value)
         {
-            T swapped = ByteSwapBE(value);
+            T swapped = SWAP_IF_LE(value);
             write(&swapped, sizeof(T));
             return *this;
         }

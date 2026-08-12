@@ -705,9 +705,9 @@ namespace OpenRCT2
             if (serialiser.IsLoading())
             {
                 command.action = Create(static_cast<GameCommand>(actionType));
+                Guard::Assert(command.action != nullptr);
             }
 
-            Guard::Assert(command.action != nullptr);
             command.action->Serialise(serialiser);
 
             return true;

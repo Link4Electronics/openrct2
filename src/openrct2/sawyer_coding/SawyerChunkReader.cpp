@@ -9,6 +9,7 @@
 
 #include "SawyerChunkReader.h"
 
+#include "../core/Endianness.h"
 #include "../core/IStream.hpp"
 #include "../core/MemoryStream.h"
 #include "../core/Numerics.hpp"
@@ -36,8 +37,9 @@ namespace OpenRCT2::SawyerCoding
         uint64_t originalPosition = _stream->GetPosition();
         try
         {
-            auto header = _stream->ReadValue<ChunkHeader>();
-            _stream->Seek(header.length, STREAM_SEEK_CURRENT);
+        auto header = _stream->ReadValue<ChunkHeader>();
+        header.length = SWAP_IF_BE(header.length);
+        _stream->Seek(header.length, STREAM_SEEK_CURRENT);
         }
         catch (const std::exception&)
         {
@@ -53,6 +55,7 @@ namespace OpenRCT2::SawyerCoding
         try
         {
             auto header = _stream->ReadValue<ChunkHeader>();
+            header.length = SWAP_IF_BE(header.length);
             if (header.length >= kMaxUncompressedChunkSize)
                 throw SawyerChunkException(kExceptionMessageCorruptChunkSize);
 

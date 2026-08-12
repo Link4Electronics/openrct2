@@ -2286,7 +2286,7 @@ namespace OpenRCT2::Ui::Windows
                     setCheckboxValue(WIDX_TRACK_CHECK_APPLY_TO_ALL, _applyToAll);
                     setCheckboxValue(WIDX_TRACK_CHECK_CHAIN_LIFT, tileElement->asTrack()->HasChain());
                     setCheckboxValue(WIDX_TRACK_CHECK_BRAKE_CLOSED, tileElement->asTrack()->IsBrakeClosed());
-                    widgets[WIDX_TRACK_CHECK_BRAKE_CLOSED].content = tileElement->asTrack()->IsBlockStart()
+                    widgets[WIDX_TRACK_CHECK_BRAKE_CLOSED].text = tileElement->asTrack()->IsBlockStart()
                         ? STR_TILE_INSPECTOR_TRACK_BLOCK_BRAKE
                         : STR_TILE_INSPECTOR_TRACK_BRAKE_CLOSED;
                     setCheckboxValue(WIDX_TRACK_CHECK_IS_INDESTRUCTIBLE, tileElement->asTrack()->IsIndestructible());

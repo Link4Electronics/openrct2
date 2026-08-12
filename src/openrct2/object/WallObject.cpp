@@ -9,6 +9,7 @@
 
 #include "WallObject.h"
 
+#include "../core/Endianness.h"
 #include "../core/Guard.hpp"
 #include "../core/IStream.hpp"
 #include "../core/Json.hpp"
@@ -27,15 +28,17 @@ namespace OpenRCT2
         _legacyType.flags = stream->ReadValue<uint8_t>();
         _legacyType.height = stream->ReadValue<uint8_t>();
         _legacyType.flags2 = stream->ReadValue<uint8_t>();
-        _legacyType.price = stream->ReadValue<money16>();
-        _legacyType.scenery_tab_id = kObjectEntryIndexNull;
-        stream->Seek(1, STREAM_SEEK_CURRENT);
-        _legacyType.scrolling_mode = stream->ReadValue<uint8_t>();
+    _legacyType.price = SWAP_IF_BE(stream->ReadValue<money16>());
+    _legacyType.scenery_tab_id = kObjectEntryIndexNull;
+    stream->Seek(1, STREAM_SEEK_CURRENT);
+    _legacyType.scrolling_mode = stream->ReadValue<uint8_t>();
 
-        GetStringTable().Read(context, stream, ObjectStringID::name);
+    GetStringTable().Read(context, stream, ObjectStringID::name);
 
-        RCTObjectEntry sgEntry = stream->ReadValue<RCTObjectEntry>();
-        SetPrimarySceneryGroup(ObjectEntryDescriptor(sgEntry));
+    RCTObjectEntry sgEntry = stream->ReadValue<RCTObjectEntry>();
+    sgEntry.flags = SWAP_IF_BE(sgEntry.flags);
+    sgEntry.checksum = SWAP_IF_BE(sgEntry.checksum);
+    SetPrimarySceneryGroup(ObjectEntryDescriptor(sgEntry));
 
         GetImageTable().Read(context, stream);
 

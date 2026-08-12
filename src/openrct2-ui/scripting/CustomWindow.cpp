@@ -954,6 +954,7 @@ namespace OpenRCT2::Ui::Windows
             widget.right = desc.X + desc.Width - 1;
             widget.bottom = desc.Y + desc.Height - 1;
             widget.content = std::numeric_limits<uint32_t>::max();
+            widget.text = kStringIdNone;
             widget.tooltip = kStringIdNone;
             widget.sztooltip = const_cast<utf8*>(desc.Tooltip.c_str());
             widget.flags.set(WidgetFlag::tooltipIsString);

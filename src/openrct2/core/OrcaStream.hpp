@@ -12,6 +12,7 @@
 #include "../core/Compression.h"
 #include "../world/Location.hpp"
 #include "Crypt.h"
+#include "Endianness.h"
 #include "FileStream.h"
 #include "Identifier.hpp"
 #include "MemoryStream.h"
@@ -44,7 +45,6 @@ namespace OpenRCT2
             zstd,
         };
 
-    private:
 #pragma pack(push, 1)
         struct Header
         {
@@ -68,6 +68,25 @@ namespace OpenRCT2
         };
 #pragma pack(pop)
 
+    private:
+        static void swapHeaderFields(Header& hdr)
+        {
+            hdr.magic = SWAP_IF_BE(hdr.magic);
+            hdr.targetVersion = SWAP_IF_BE(hdr.targetVersion);
+            hdr.minVersion = SWAP_IF_BE(hdr.minVersion);
+            hdr.numChunks = SWAP_IF_BE(hdr.numChunks);
+            hdr.uncompressedSize = SWAP_IF_BE(hdr.uncompressedSize);
+            hdr.compression = static_cast<CompressionType>(SWAP_IF_BE(static_cast<uint32_t>(hdr.compression)));
+            hdr.compressedSize = SWAP_IF_BE(hdr.compressedSize);
+        }
+
+        static void swapChunkEntryFields(ChunkEntry& entry)
+        {
+            entry.id = SWAP_IF_BE(entry.id);
+            entry.offset = SWAP_IF_BE(entry.offset);
+            entry.length = SWAP_IF_BE(entry.length);
+        }
+
         IStream* _stream;
         Mode _mode;
         Header _header;
@@ -85,11 +104,13 @@ namespace OpenRCT2
             if (mode == Mode::reading)
             {
                 _header = _stream->ReadValue<Header>();
+                swapHeaderFields(_header);
 
                 _chunks.clear();
                 for (uint32_t i = 0; i < _header.numChunks; i++)
                 {
                     auto entry = _stream->ReadValue<ChunkEntry>();
+                    swapChunkEntryFields(entry);
                     _chunks.push_back(entry);
                 }
 
@@ -189,10 +210,16 @@ namespace OpenRCT2
                     }
                 }
 
-                // Write header and chunk table
+                // Write header and chunk table (swap back to LE for disk)
+                swapHeaderFields(_header);
                 _stream->WriteValue(_header);
+                swapHeaderFields(_header);
                 for (const auto& chunk : _chunks)
-                    _stream->WriteValue(chunk);
+                {
+                    auto chunkCopy = chunk;
+                    swapChunkEntryFields(chunkCopy);
+                    _stream->WriteValue(chunkCopy);
+                }
                 // Write chunk data
                 _stream->Write(_buffer.GetData(), _buffer.GetLength());
             }
@@ -582,13 +609,13 @@ namespace OpenRCT2
                     {
                         int64_t raw{};
                         read(&raw, sizeof(raw));
-                        return static_cast<T>(raw);
+                        return static_cast<T>(SWAP_IF_BE(raw));
                     }
                     else
                     {
                         uint64_t raw{};
                         read(&raw, sizeof(raw));
-                        return static_cast<T>(raw);
+                        return static_cast<T>(SWAP_IF_BE(raw));
                     }
                 }
                 else
@@ -597,21 +624,23 @@ namespace OpenRCT2
                     {
                         int32_t raw{};
                         read(&raw, sizeof(raw));
-                        if (raw < std::numeric_limits<T>::min() || raw > std::numeric_limits<T>::max())
+                        auto swapped = SWAP_IF_BE(raw);
+                        if (swapped < std::numeric_limits<T>::min() || swapped > std::numeric_limits<T>::max())
                         {
                             throw std::runtime_error("Value is incompatible with internal type.");
                         }
-                        return static_cast<T>(raw);
+                        return static_cast<T>(swapped);
                     }
                     else
                     {
                         uint32_t raw{};
                         read(&raw, sizeof(raw));
-                        if (raw > std::numeric_limits<T>::max())
+                        auto swapped = SWAP_IF_BE(raw);
+                        if (swapped > std::numeric_limits<T>::max())
                         {
                             throw std::runtime_error("Value is incompatible with internal type.");
                         }
-                        return static_cast<T>(raw);
+                        return static_cast<T>(swapped);
                     }
                 }
             }
@@ -624,12 +653,14 @@ namespace OpenRCT2
                     if constexpr (std::is_signed<T>())
                     {
                         auto raw = static_cast<int64_t>(value);
-                        write(&raw, sizeof(raw));
+                        auto swapped = SWAP_IF_BE(raw);
+                        write(&swapped, sizeof(swapped));
                     }
                     else
                     {
                         auto raw = static_cast<uint64_t>(value);
-                        write(&raw, sizeof(raw));
+                        auto swapped = SWAP_IF_BE(raw);
+                        write(&swapped, sizeof(swapped));
                     }
                 }
                 else
@@ -637,12 +668,14 @@ namespace OpenRCT2
                     if constexpr (std::is_signed<T>())
                     {
                         auto raw = static_cast<int32_t>(value);
-                        write(&raw, sizeof(raw));
+                        auto swapped = SWAP_IF_BE(raw);
+                        write(&swapped, sizeof(swapped));
                     }
                     else
                     {
                         auto raw = static_cast<uint32_t>(value);
-                        write(&raw, sizeof(raw));
+                        auto swapped = SWAP_IF_BE(raw);
+                        write(&swapped, sizeof(swapped));
                     }
                 }
             }
