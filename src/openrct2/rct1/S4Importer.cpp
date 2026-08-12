@@ -174,8 +174,6 @@ namespace OpenRCT2::RCT1
             _s4Path = path;
             _isScenario = isScenario;
             _gameVersion = DetectRCT1Version(_s4.GameVersion) & FILE_VERSION_MASK;
-            std::fprintf(stderr, "DEBUG _gameVersion=%d GameVersion=%u NumRides=%u\n",
-                _gameVersion, _s4.GameVersion, _s4.NumRides);
 
             // Only determine what objects we required to import this saved game
             InitialiseEntryMaps();
@@ -195,50 +193,20 @@ namespace OpenRCT2::RCT1
             std::fflush(stderr);
 #endif
 
-            std::fprintf(stderr, "DEBUG [BE] Import: ImportRides\n");
-            std::fflush(stderr);
             ImportRides();
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportRides\n");
-            std::fflush(stderr);
             ImportRideMeasurements();
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportRideMeasurements\n");
-            std::fflush(stderr);
             ImportEntities(gameState);
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportEntities\n");
-            std::fflush(stderr);
             ImportTileElements(gameState);
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportTileElements\n");
-            std::fflush(stderr);
             ImportMapAnimations();
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportMapAnimations\n");
-            std::fflush(stderr);
             ImportPeepSpawns(gameState);
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportPeepSpawns\n");
-            std::fflush(stderr);
             ImportFinance(gameState);
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportFinance\n");
-            std::fflush(stderr);
             ImportResearch(gameState);
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportResearch\n");
-            std::fflush(stderr);
             ImportParkName(gameState);
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportParkName\n");
-            std::fflush(stderr);
             ImportParkFlags(gameState);
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportParkFlags\n");
-            std::fflush(stderr);
             ImportClimate(gameState);
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportClimate\n");
-            std::fflush(stderr);
             ImportScenarioNameDetails(gameState);
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportScenarioNameDetails\n");
-            std::fflush(stderr);
             ImportScenarioObjective(gameState);
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportScenarioObjective\n");
-            std::fflush(stderr);
             ImportSavedView(gameState);
-            std::fprintf(stderr, "DEBUG [BE] Import: after ImportSavedView\n");
-            std::fflush(stderr);
 
             ConvertPeepAnimationTypeToObjects(gameState);
             ResetPeepSpriteBounds(gameState);

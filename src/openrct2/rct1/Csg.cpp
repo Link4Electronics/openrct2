@@ -9,6 +9,7 @@
 
 #include "Csg.h"
 
+#include "../core/Endianness.h"
 #include "../core/File.h"
 #include "../core/FileStream.h"
 #include "../core/Path.hpp"
@@ -66,11 +67,19 @@ namespace OpenRCT2
         // Direct lowercase fallback for case-sensitive filesystems where scandir-based
         // ResolveCasing might fail (e.g., mount permissions, overlay filesystems).
         auto checkPath4 = Path::Combine(path, u8"Data", u8"csg1i.dat");
+#if RCT2_BIG_ENDIAN
+        fprintf(stderr, "DEBUG [BE] FindCsg1idatAtLocation: checking '%s', exists=%d\n",
+            u8string(checkPath4).c_str(), File::Exists(checkPath4));
+#endif
         if (File::Exists(checkPath4))
         {
             return u8string(checkPath4);
         }
         auto checkPath5 = Path::Combine(path, u8"Data", u8"csg1i.1");
+#if RCT2_BIG_ENDIAN
+        fprintf(stderr, "DEBUG [BE] FindCsg1idatAtLocation: checking '%s', exists=%d\n",
+            u8string(checkPath5).c_str(), File::Exists(checkPath5));
+#endif
         if (File::Exists(checkPath5))
         {
             return u8string(checkPath5);

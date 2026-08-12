@@ -360,18 +360,6 @@ namespace OpenRCT2::Ui
         // Get the widget
         const auto& widget = w.widgets[widgetIndex];
 
-        {
-            auto wc = static_cast<int32_t>(w.classification);
-            if (wc == 13 || wc == 16 || wc == 15 || wc == 29 || wc == 32)
-            {
-                std::fprintf(stderr, "[WIDGET_CTR_DEBUG] WC=%d type=%d text=%u content=%u flags=%u\n",
-                    wc, static_cast<int32_t>(widget.type),
-                    static_cast<unsigned>(widget.text),
-                    static_cast<unsigned>(widget.content),
-                    static_cast<unsigned>(widget.flags.holder));
-            }
-        }
-
         if (widget.text == kStringIdNone)
             return;
 
@@ -424,18 +412,6 @@ namespace OpenRCT2::Ui
     {
         // Get the widget
         const auto& widget = w.widgets[widgetIndex];
-
-        {
-            auto wc = static_cast<int32_t>(w.classification);
-            if (wc == 13 || wc == 16 || wc == 15 || wc == 29 || wc == 32)
-            {
-                std::fprintf(stderr, "[WIDGET_DEBUG] WC=%d type=%d text=%u content=%u flags=%u\n",
-                    wc, static_cast<int32_t>(widget.type),
-                    static_cast<unsigned>(widget.text),
-                    static_cast<unsigned>(widget.content),
-                    static_cast<unsigned>(widget.flags.holder));
-            }
-        }
 
         if (widget.text == kStringIdNone)
             return;
@@ -672,18 +648,6 @@ namespace OpenRCT2::Ui
     {
         // Get the widget
         const auto& widget = w.widgets[widgetIndex];
-
-        {
-            auto wc = static_cast<int32_t>(w.classification);
-            if (wc == 13 || wc == 16 || wc == 15 || wc == 29 || wc == 32)
-            {
-                std::fprintf(stderr, "[WIDGET_CHK_DEBUG] WC=%d type=%d text=%u content=%u flags=%u\n",
-                    wc, static_cast<int32_t>(widget.type),
-                    static_cast<unsigned>(widget.text),
-                    static_cast<unsigned>(widget.content),
-                    static_cast<unsigned>(widget.flags.holder));
-            }
-        }
 
         // Resolve the absolute ltb
         ScreenCoordsXY topLeft = w.windowPos + ScreenCoordsXY{ widget.left, widget.top };
